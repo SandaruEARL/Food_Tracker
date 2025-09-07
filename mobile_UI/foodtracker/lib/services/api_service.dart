@@ -5,7 +5,6 @@ import '../models/user.dart';
 import '../models/order.dart';
 import '../utils/constant.dart';
 
-
 class ApiService {
   static const String baseUrl = ApiConstants.baseUrl;
 
@@ -35,8 +34,11 @@ class ApiService {
   }
 
   // AUTHENTICATION APIS
-  Future<User?> register(String name, String email, String password, String type) async {
+  Future<Map<String, dynamic>> register(String name, String email, String password, String type) async {
     try {
+      print('Attempting registration with URL: $baseUrl/api/auth/register');
+      print('Registration data: name=$name, email=$email, type=$type');
+
       final response = await http.post(
         Uri.parse('$baseUrl/api/auth/register'),
         headers: await _getHeaders(),
@@ -48,20 +50,50 @@ class ApiService {
         }),
       );
 
-      if (response.statusCode == 200) {
+      print('Registration response status: ${response.statusCode}');
+      print('Registration response body: ${response.body}');
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
         final data = jsonDecode(response.body);
-        await _saveToken(data['token']);
-        return User.fromJson(data);
+        if (data['token'] != null) {
+          await _saveToken(data['token']);
+        }
+        return {
+          'success': true,
+          'user': User.fromJson(data),
+          'message': 'Registration successful'
+        };
+      } else {
+        // Handle different error status codes
+        final errorData = jsonDecode(response.body);
+        String errorMessage = 'Registration failed';
+
+        if (errorData['message'] != null) {
+          errorMessage = errorData['message'];
+        } else if (errorData['error'] != null) {
+          errorMessage = errorData['error'];
+        }
+
+        return {
+          'success': false,
+          'user': null,
+          'message': errorMessage
+        };
       }
-      return null;
     } catch (e) {
       print('Register error: $e');
-      return null;
+      return {
+        'success': false,
+        'user': null,
+        'message': 'Network error: ${e.toString()}'
+      };
     }
   }
 
-  Future<User?> login(String email, String password) async {
+  Future<Map<String, dynamic>> login(String email, String password) async {
     try {
+      print('Attempting login with URL: $baseUrl/api/auth/login');
+
       final response = await http.post(
         Uri.parse('$baseUrl/api/auth/login'),
         headers: await _getHeaders(),
@@ -71,15 +103,42 @@ class ApiService {
         }),
       );
 
+      print('Login response status: ${response.statusCode}');
+      print('Login response body: ${response.body}');
+
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        await _saveToken(data['token']);
-        return User.fromJson(data);
+        if (data['token'] != null) {
+          await _saveToken(data['token']);
+        }
+        return {
+          'success': true,
+          'user': User.fromJson(data),
+          'message': 'Login successful'
+        };
+      } else {
+        final errorData = jsonDecode(response.body);
+        String errorMessage = 'Login failed';
+
+        if (errorData['message'] != null) {
+          errorMessage = errorData['message'];
+        } else if (errorData['error'] != null) {
+          errorMessage = errorData['error'];
+        }
+
+        return {
+          'success': false,
+          'user': null,
+          'message': errorMessage
+        };
       }
-      return null;
     } catch (e) {
       print('Login error: $e');
-      return null;
+      return {
+        'success': false,
+        'user': null,
+        'message': 'Network error: ${e.toString()}'
+      };
     }
   }
 
@@ -89,7 +148,7 @@ class ApiService {
     await prefs.remove('user_data');
   }
 
-  // ORDER APIS
+  // ORDER APIS (keeping them unchanged for now)
   Future<List<Order>> getRelevantOrders() async {
     try {
       final response = await http.get(

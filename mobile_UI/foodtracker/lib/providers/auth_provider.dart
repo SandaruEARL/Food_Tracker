@@ -5,7 +5,6 @@ import '../models/user.dart';
 import '../services/api_service.dart';
 import '../services/web_socket_service.dart';
 
-
 class AuthProvider with ChangeNotifier {
   User? _user;
   bool _isLoading = false;
@@ -25,12 +24,20 @@ class AuthProvider with ChangeNotifier {
   Future<void> init() async {
     _setLoading(true);
 
-    final prefs = await SharedPreferences.getInstance();
-    final userData = prefs.getString('user_data');
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final userData = prefs.getString('user_data');
 
-    if (userData != null) {
-      _user = User.fromJson(jsonDecode(userData));
-      await _webSocketService.connect(_user!);
+      if (userData != null) {
+        _user = User.fromJson(jsonDecode(userData));
+        await _webSocketService.connect(_user!);
+      }
+    } catch (e) {
+      print('Initialization error: $e');
+      // Clear corrupted data
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove('user_data');
+      await prefs.remove('auth_token');
     }
 
     _setLoading(false);
@@ -42,15 +49,17 @@ class AuthProvider with ChangeNotifier {
     _clearError();
 
     try {
-      final user = await _apiService.register(name, email, password, type);
-      if (user != null) {
-        await _setUser(user);
+      final result = await _apiService.register(name, email, password, type);
+
+      if (result['success'] == true && result['user'] != null) {
+        await _setUser(result['user']);
         return true;
       } else {
-        _setError('Registration failed. Please try again.');
+        _setError(result['message'] ?? 'Registration failed. Please try again.');
         return false;
       }
     } catch (e) {
+      print('Registration error in provider: $e');
       _setError('Registration failed: ${e.toString()}');
       return false;
     } finally {
@@ -64,15 +73,17 @@ class AuthProvider with ChangeNotifier {
     _clearError();
 
     try {
-      final user = await _apiService.login(email, password);
-      if (user != null) {
-        await _setUser(user);
+      final result = await _apiService.login(email, password);
+
+      if (result['success'] == true && result['user'] != null) {
+        await _setUser(result['user']);
         return true;
       } else {
-        _setError('Invalid email or password.');
+        _setError(result['message'] ?? 'Invalid email or password.');
         return false;
       }
     } catch (e) {
+      print('Login error in provider: $e');
       _setError('Login failed: ${e.toString()}');
       return false;
     } finally {
@@ -84,29 +95,42 @@ class AuthProvider with ChangeNotifier {
   Future<void> logout() async {
     _setLoading(true);
 
-    await _apiService.logout();
-    _webSocketService.disconnect();
+    try {
+      await _apiService.logout();
+      _webSocketService.disconnect();
 
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.remove('user_data');
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove('user_data');
 
-    _user = null;
-    _clearError();
-    _setLoading(false);
+      _user = null;
+      _clearError();
+    } catch (e) {
+      print('Logout error: $e');
+      // Even if logout fails, clear local data
+      _user = null;
+      _clearError();
+    } finally {
+      _setLoading(false);
+    }
   }
 
   // Private helper methods
   Future<void> _setUser(User user) async {
-    _user = user;
+    try {
+      _user = user;
 
-    // Save user data to local storage
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('user_data', jsonEncode(user.toJson()));
+      // Save user data to local storage
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('user_data', jsonEncode(user.toJson()));
 
-    // Connect to WebSocket
-    await _webSocketService.connect(user);
+      // Connect to WebSocket
+      await _webSocketService.connect(user);
 
-    notifyListeners();
+      notifyListeners();
+    } catch (e) {
+      print('Set user error: $e');
+      throw Exception('Failed to save user data: ${e.toString()}');
+    }
   }
 
   void _setLoading(bool loading) {
