@@ -1,6 +1,6 @@
 // lib/utils/constants.dart
 class ApiConstants {
-  static const String baseUrl = 'http://192.168.43.10:8080'; // Replace with your actual URL
+  static const String baseUrl = 'http://your_ip:8080'; // machine's ip address that back-end running
   static const String wsUrl = '$baseUrl/ws';
 }
 
