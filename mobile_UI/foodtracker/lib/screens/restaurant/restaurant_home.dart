@@ -127,7 +127,7 @@ class _RestaurantHomeState extends State<RestaurantHome> {
                       ),
                       OutlinedButton(
                         onPressed: () {
-                          // Handle reject - you might want to implement a reject API
+                          // Handle reject - might want to implement a reject API
                         },
                         child: Text('Reject'),
                       ),

@@ -62,7 +62,7 @@ class _CustomerHomeState extends State<CustomerHome> {
       _descriptionController.text.trim(),
       location.lat,
       location.lng,
-      'Current Location', // You can implement address lookup
+      'Current Location', // Can implement address lookup
     );
 
     if (success) {
