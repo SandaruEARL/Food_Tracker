@@ -4,10 +4,12 @@ import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../services/api_service.dart';
 import '../../models/order.dart';
-import '../../utils/constant.dart';
+import '../../utils/constants.dart';
 
 
 class RestaurantHome extends StatefulWidget {
+  const RestaurantHome({super.key});
+
   @override
   _RestaurantHomeState createState() => _RestaurantHomeState();
 }
@@ -122,8 +124,8 @@ class _RestaurantHomeState extends State<RestaurantHome> {
                     children: [
                       ElevatedButton(
                         onPressed: () => _updateOrderStatus(order.id, OrderStatus.accepted),
-                        child: Text('Accept'),
                         style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
+                        child: Text('Accept'),
                       ),
                       OutlinedButton(
                         onPressed: () {

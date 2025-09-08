@@ -1,11 +1,10 @@
 import 'dart:convert';
-import 'package:stomp_dart_client/stomp.dart';
-import 'package:stomp_dart_client/stomp_config.dart';
-import 'package:stomp_dart_client/stomp_frame.dart';
+import 'package:stomp_dart_client/stomp_dart_client.dart' show StompFrame, StompClient, StompConfig;
+
 import '../models/user.dart';
 import '../models/order.dart';
 import '../models/location.dart';
-import '../utils/constant.dart';
+import '../utils/constants.dart';
 
 
 class WebSocketService {

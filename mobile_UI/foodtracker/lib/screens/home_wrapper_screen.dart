@@ -3,12 +3,14 @@ import 'package:flutter/material.dart';
 import 'package:foodtracker/screens/restaurant/restaurant_home.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
-import '../utils/constant.dart';
+import '../utils/constants.dart';
 import 'customer/customer_home.dart';
 import 'driver/driver_home.dart';
 
 
 class HomeWrapper extends StatelessWidget {
+  const HomeWrapper({super.key});
+
   @override
   Widget build(BuildContext context) {
     final authProvider = Provider.of<AuthProvider>(context);

@@ -1,7 +1,7 @@
 // lib/utils/constants.dart
 class ApiConstants {
-  static const String baseUrl = 'http://backend_hosted_computer_ip:8080'; // machine's ip address that back-end running
-  static const String wsUrl = '$baseUrl/ws';
+  static const String baseUrl = 'http://192.168.43.10:8080'; // machine's ip address that back-end running
+  static const String wsUrl = 'ws://192.168.43.10:8080/ws/websocket';
 }
 
 class UserType {

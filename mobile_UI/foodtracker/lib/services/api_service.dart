@@ -3,7 +3,7 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/user.dart';
 import '../models/order.dart';
-import '../utils/constant.dart';
+import '../utils/constants.dart';
 
 class ApiService {
   static const String baseUrl = ApiConstants.baseUrl;
@@ -218,7 +218,7 @@ class ApiService {
         }),
       );
 
-      return response.statusCode == 200;
+      return response.statusCode == 200 || response.statusCode == 201;
     } catch (e) {
       print('Place order error: $e');
       return false;
