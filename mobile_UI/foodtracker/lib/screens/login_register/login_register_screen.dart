@@ -4,11 +4,11 @@ import 'package:provider/provider.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import '../../../providers/auth_provider.dart';
 import '../../../utils/constants.dart';
-import '../../../services/responsive_service.dart';
 import '../home_wrapper_screen.dart';
 import '../../../widgets/custom_text_form_field.dart';
 import '../../../widgets/custom_elevated_button.dart';
 import '../../../widgets/custom_tab_bar.dart';
+import '../../../widgets/brand_logo.dart'; // Import the new brand logo widget
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -74,8 +74,6 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
   }
 
   void _clearErrors() {
-    final authProvider = Provider.of<AuthProvider>(context, listen: false);
-
     setState(() {
       _loginError = null;
       _registerError = null;
@@ -96,7 +94,7 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
 
   @override
   Widget build(BuildContext context) {
-    final responsive = context.responsive;
+    final safeAreaTop = MediaQuery.of(context).padding.top;
 
     return Scaffold(
       body: Consumer<AuthProvider>(
@@ -106,42 +104,25 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
               // Top safe area with app branding
               Container(
                 padding: EdgeInsets.only(
-                  top: responsive.safeArea.top + responsive.brandSpacing,
+                  top: safeAreaTop + 24,
                 ),
                 child: Column(
                   children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(
-                          "SPEED ",
-                          style: responsive.responsiveTextStyle(
-                            fontSize: responsive.brandFontSize,
-                            fontFamily: 'hind',
-                            fontWeight: FontWeight.bold,
-                            color: Color(0xFF0386D0),
-                          ),
-                        ),
-                        Text(
-                          "MAN",
-                          style: responsive.responsiveTextStyle(
-                            fontSize: responsive.brandFontSize,
-                            fontFamily: 'hind',
-                            fontWeight: FontWeight.bold,
-                            color: Colors.grey[800],
-                          ),
-                        ),
-                      ],
-                    ),
-                    responsive.smallVerticalSpace,
-                    responsive.maxWidthContainer(
+                    // Using the new BrandLogo widget
+                    BrandLogo(size: 30,),
+
+                    SizedBox(height: 16),
+                    Container(
+                      width: double.infinity,
+                      constraints: BoxConstraints(maxWidth: 400),
+                      padding: EdgeInsets.symmetric(horizontal: 24),
                       child: Text.rich(
                         TextSpan(
                           text: _currentTabIndex == 0
                               ? "By signing in you are agreeing "
                               : "By signing up you are agreeing ",
-                          style: responsive.responsiveTextStyle(
-                            fontSize: responsive.isSmallDevice ? 14 : 16,
+                          style: TextStyle(
+                            fontSize: 14,
                             fontFamily: 'hind',
                             color: Color(0xFFA6A6A6),
                           ),
@@ -163,13 +144,11 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                 ),
               ),
 
-              responsive.mediumVerticalSpace,
+              SizedBox(height: 24),
 
               // Navigation Ribbon - Using CustomTabBar
               Padding(
-                padding: EdgeInsets.symmetric(
-                  horizontal: responsive.tabBarHorizontalPadding,
-                ),
+                padding: EdgeInsets.symmetric(horizontal: 23),
                 child: CustomTabBar(
                   controller: _tabController,
                   tabTitles: ['Login', 'Register'],
@@ -179,14 +158,12 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
               // Tab Content
               Expanded(
                 child: Padding(
-                  padding: EdgeInsets.symmetric(
-                    horizontal: responsive.contentHorizontalPadding,
-                  ),
+                  padding: EdgeInsets.symmetric(horizontal: 24),
                   child: TabBarView(
                     controller: _tabController,
                     children: [
-                      _buildLoginTab(authProvider, responsive),
-                      _buildRegisterTab(authProvider, responsive),
+                      _buildLoginTab(authProvider),
+                      _buildRegisterTab(authProvider),
                     ],
                   ),
                 ),
@@ -198,27 +175,30 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
     );
   }
 
-  Widget _buildErrorMessage(String error, ResponsiveService responsive) {
+  Widget _buildErrorMessage(String error) {
     return Container(
-      padding: responsive.responsivePadding(all: 12),
-      margin: EdgeInsets.only(bottom: responsive.scale(16)),
+      padding: EdgeInsets.all(12),
+      margin: EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
         color: Colors.red.shade50,
         border: Border.all(color: Colors.red.shade300),
-        borderRadius: responsive.mediumBorderRadius,
+        borderRadius: BorderRadius.circular(8),
       ),
       child: Row(
         children: [
           Icon(
             Icons.error_outline,
             color: Colors.red,
-            size: responsive.iconSize,
+            size: 20,
           ),
-          responsive.smallHorizontalSpace,
+          SizedBox(width: 8),
           Expanded(
             child: Text(
               error,
-              style: responsive.bodyMedium.copyWith(color: Colors.red),
+              style: TextStyle(
+                color: Colors.red,
+                fontSize: 14,
+              ),
             ),
           ),
         ],
@@ -226,27 +206,28 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
     );
   }
 
-  Widget _buildSocialLoginButtons(ResponsiveService responsive) {
+  Widget _buildSocialLoginButtons() {
     return Column(
       children: [
-        responsive.mediumVerticalSpace,
+        SizedBox(height: 24),
         Row(
           children: [
             Expanded(child: Divider(color: Color(0xFFA6A6A6))),
             Padding(
-              padding: responsive.responsivePadding(horizontal: 16),
+              padding: EdgeInsets.symmetric(horizontal: 16),
               child: Text(
                 'or continue with',
-                style: responsive.bodyMedium.copyWith(
+                style: TextStyle(
                   color: Color(0xFFA6A6A6),
                   fontFamily: 'hind',
+                  fontSize: 14,
                 ),
               ),
             ),
             Expanded(child: Divider(color: Color(0xFFA6A6A6))),
           ],
         ),
-        responsive.mediumVerticalSpace,
+        SizedBox(height: 24),
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
@@ -261,9 +242,9 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                   ),
                 );
               },
-              responsive: responsive,
             ),
-            responsive.largeHorizontalSpace,
+            SizedBox(width: 32),
+
             _buildSocialButton(
               icon: FontAwesomeIcons.apple,
               label: '',
@@ -275,7 +256,6 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                   ),
                 );
               },
-              responsive: responsive,
             ),
           ],
         ),
@@ -287,23 +267,25 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
     required IconData icon,
     required String label,
     required VoidCallback onTap,
-    required ResponsiveService responsive,
   }) {
     return GestureDetector(
       onTap: onTap,
       child: Icon(
         icon,
-        size: responsive.iconSize,
+        size: 24,
         color: Colors.grey,
       ),
     );
   }
 
-  Widget _buildLoginTab(AuthProvider authProvider, ResponsiveService responsive) {
+  Widget _buildLoginTab(AuthProvider authProvider) {
     return SingleChildScrollView(
-      padding: responsive.formPadding,
+      padding: EdgeInsets.symmetric(vertical: 24),
       child: ConstrainedBox(
-        constraints: responsive.formConstraints,
+        constraints: BoxConstraints(
+          maxWidth: 400,
+          minHeight: MediaQuery.of(context).size.height * 0.6,
+        ),
         child: Form(
           key: _loginFormKey,
           child: Column(
@@ -315,7 +297,7 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                 keyboardType: TextInputType.emailAddress,
                 validator: (value) => (value?.isEmpty ?? true) ? 'Email is required' : null,
               ),
-              responsive.mediumVerticalSpace,
+              SizedBox(height: 24),
               CustomTextFormField(
                 controller: _loginPasswordController,
                 labelText: 'Password',
@@ -323,10 +305,10 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                 obscureText: true,
                 validator: (value) => (value?.isEmpty ?? true) ? 'Password is required' : null,
               ),
-              responsive.mediumVerticalSpace,
+              SizedBox(height: 24),
 
               // Error message for login only
-              if (_loginError != null) _buildErrorMessage(_loginError!, responsive),
+              if (_loginError != null) _buildErrorMessage(_loginError!),
 
               CustomElevatedButton(
                 onPressed: _login,
@@ -335,13 +317,12 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
               ),
 
               // Social login buttons
-              _buildSocialLoginButtons(responsive),
+              _buildSocialLoginButtons(),
 
-              responsive.extraLargeVerticalSpace,
-              Text(
-                "v1.0.0 - quickman-dev",
-                style: responsive.bodySmall.copyWith(color: Color(0xFFA6A6A6)),
-              ),
+              SizedBox(height: 48),
+
+
+              Text("v1.0.0 - quickman - dev")
             ],
           ),
         ),
@@ -349,11 +330,14 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
     );
   }
 
-  Widget _buildRegisterTab(AuthProvider authProvider, ResponsiveService responsive) {
+  Widget _buildRegisterTab(AuthProvider authProvider) {
     return SingleChildScrollView(
-      padding: responsive.formPadding,
+      padding: EdgeInsets.symmetric(vertical: 24),
       child: ConstrainedBox(
-        constraints: responsive.formConstraints,
+        constraints: BoxConstraints(
+          maxWidth: 400,
+          minHeight: MediaQuery.of(context).size.height * 0.6,
+        ),
         child: Form(
           key: _registerFormKey,
           child: Column(
@@ -365,11 +349,11 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                 prefixIcon: Icons.person_outline,
                 validator: (value) => (value?.isEmpty ?? true) ? 'Name is required' : null,
               ),
-              responsive.mediumVerticalSpace,
+              SizedBox(height: 24),
 
               // User Type Dropdown
               Container(
-                padding: responsive.responsivePadding(
+                padding: EdgeInsets.symmetric(
                   horizontal: 16,
                   vertical: 4,
                 ),
@@ -383,19 +367,23 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                     Icon(
                       Icons.account_circle_outlined,
                       color: Color(0xFFA6A6A6),
-                      size: responsive.iconSize,
+                      size: 24,
                     ),
-                    responsive.smallHorizontalSpace,
+                    SizedBox(width: 8),
                     Expanded(
                       child: DropdownButtonHideUnderline(
                         child: DropdownButton<String>(
                           dropdownColor: Colors.white,
                           value: _selectedUserType,
                           isExpanded: true,
-                          style: responsive.bodyLarge,
+                          style: TextStyle(
+                            fontSize: 16,
+                            color: Colors.black87,
+                          ),
                           hint: Text(
                             'Register as',
-                            style: responsive.bodyLarge.copyWith(
+                            style: TextStyle(
+                              fontSize: 16,
                               color: Color(0xFFA6A6A6),
                               fontFamily: 'hind',
                             ),
@@ -412,7 +400,8 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                               value: UserType.customer,
                               child: Text(
                                 'Customer',
-                                style: responsive.bodyLarge.copyWith(
+                                style: TextStyle(
+                                  fontSize: 16,
                                   color: Color(0xFFA6A6A6),
                                 ),
                               ),
@@ -421,7 +410,8 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                               value: UserType.driver,
                               child: Text(
                                 'Driver',
-                                style: responsive.bodyLarge.copyWith(
+                                style: TextStyle(
+                                  fontSize: 16,
                                   color: Color(0xFFA6A6A6),
                                 ),
                               ),
@@ -430,7 +420,8 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                               value: UserType.restaurant,
                               child: Text(
                                 'Restaurant',
-                                style: responsive.bodyLarge.copyWith(
+                                style: TextStyle(
+                                  fontSize: 16,
                                   color: Color(0xFFA6A6A6),
                                 ),
                               ),
@@ -442,7 +433,7 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                   ],
                 ),
               ),
-              responsive.mediumVerticalSpace,
+              SizedBox(height: 24),
 
               CustomTextFormField(
                 controller: _registerEmailController,
@@ -455,7 +446,7 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                   return null;
                 },
               ),
-              responsive.mediumVerticalSpace,
+              SizedBox(height: 24),
 
               CustomTextFormField(
                 controller: _registerPasswordController,
@@ -468,10 +459,10 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                   return null;
                 },
               ),
-              responsive.mediumVerticalSpace,
+              SizedBox(height: 24),
 
               // Error message for register only
-              if (_registerError != null) _buildErrorMessage(_registerError!, responsive),
+              if (_registerError != null) _buildErrorMessage(_registerError!),
 
               // Register button
               CustomElevatedButton(
@@ -481,14 +472,12 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
               ),
 
               // Social login buttons for register tab as well
-              _buildSocialLoginButtons(responsive),
+              _buildSocialLoginButtons(),
 
-              responsive.mediumVerticalSpace,
+              SizedBox(height: 32),
 
-              Text(
-                "v1.0.0 - quickman-dev",
-                style: responsive.bodySmall.copyWith(color: Color(0xFFA6A6A6)),
-              ),
+
+             Text("v1.0.0 - quickman - dev")
             ],
           ),
         ),

@@ -6,13 +6,16 @@ import '../../services/api_service.dart';
 import '../../services/location_service.dart';
 import '../../models/order.dart';
 import '../../models/location.dart';
+import '../../widgets/brand_logo.dart';
+import 'orders_bottom_sheet.dart';
+
 
 class CustomerHome extends StatefulWidget {
   @override
   _CustomerHomeState createState() => _CustomerHomeState();
 }
 
-class _CustomerHomeState extends State<CustomerHome> {
+class _CustomerHomeState extends State<CustomerHome> with TickerProviderStateMixin {
   final ApiService _apiService = ApiService();
   final LocationService _locationService = LocationService();
   final _descriptionController = TextEditingController();
@@ -20,29 +23,50 @@ class _CustomerHomeState extends State<CustomerHome> {
   final _phoneNumberController = TextEditingController();
   final _addressController = TextEditingController();
   final _specialInstructionsController = TextEditingController();
-
-  // Add the missing controllers
   final _latitudeController = TextEditingController();
   final _longitudeController = TextEditingController();
 
   List<Order> _orders = [];
   bool _isLoading = false;
+  bool _isFetchingLocation = false;
   Location? _currentLocation;
+
+  // Animation controller and animation for sync icon
+  late AnimationController _rotationAnimationController;
+  late Animation<double> _rotationAnimation;
 
   @override
   void initState() {
     super.initState();
+
+    // Initialize animation controller
+    _rotationAnimationController = AnimationController(
+      duration: const Duration(milliseconds: 1000),
+      vsync: this,
+    );
+
+    _rotationAnimation = Tween<double>(
+      begin: 0.0,
+      end: 1.0,
+    ).animate(CurvedAnimation(
+      parent: _rotationAnimationController,
+      curve: Curves.easeInOut,
+    ));
+
     _loadOrders();
     _setupWebSocketListeners();
     _initializeCustomerInfo();
-    _getCurrentLocation(); // Get initial location
+    // Removed _getCurrentLocation() - only fetch when user taps the sync icon
   }
 
   void _initializeCustomerInfo() {
-    // Initialize with sample data - you can replace this with actual user data
+    // Set default placeholder values that match the field titles
+    _descriptionController.text = "";
+    _addressController.text = "";
+    _latitudeController.text = "Tap sync icon to get location";
+    _longitudeController.text = "Tap sync icon to get location";
     _customerNameController.text = "John Doe";
     _phoneNumberController.text = "+1 (555) 123-4567";
-    _addressController.text = "123 Main St, City, State 12345";
   }
 
   void _setupWebSocketListeners() {
@@ -66,55 +90,82 @@ class _CustomerHomeState extends State<CustomerHome> {
     });
   }
 
-  // Add the missing _getCurrentLocation method
   Future<void> _getCurrentLocation() async {
+    if (_isFetchingLocation) return; // Prevent multiple simultaneous requests
+
+    setState(() {
+      _isFetchingLocation = true;
+    });
+
+    // Reset and start rotation animation
+    _rotationAnimationController.reset();
+    _rotationAnimationController.repeat(); // Use repeat for continuous rotation
+
     final location = await _locationService.getCurrentLocation();
+
+    // Stop animation
+    _rotationAnimationController.stop();
+    _rotationAnimationController.reset();
+
+    setState(() {
+      _isFetchingLocation = false;
+    });
+
     if (location != null) {
       setState(() {
         _currentLocation = location;
+        // Override the default placeholder with actual coordinates
         _latitudeController.text = location.lat.toStringAsFixed(6);
         _longitudeController.text = location.lng.toStringAsFixed(6);
       });
     } else {
-      // Show error if location couldn't be retrieved
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Could not get your location. Please check permissions.')),
         );
+        // Reset to placeholder text if location fetch failed
+        setState(() {
+          _latitudeController.text = "Tap sync icon to get location";
+          _longitudeController.text = "Tap sync icon to get location";
+        });
       }
     }
   }
 
-  // placing the order
   Future<void> _placeOrder() async {
-    if (_descriptionController.text.trim().isEmpty) {
+    // Clear default placeholders if they haven't been changed
+    String description = _descriptionController.text.trim();
+    String address = _addressController.text.trim();
+
+    if (description.isEmpty || description == "Order Description") {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Please enter an order description')),
       );
       return;
     }
 
-    // Use current location or try to get it again
     Location? location = _currentLocation;
     if (location == null) {
-      location = await _locationService.getCurrentLocation();
-      if (location == null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Could not get your location')),
-        );
-        return;
-      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Please get your location first by tapping the sync icon')),
+      );
+      return;
     }
 
+    // Use default address if not changed
+    String finalAddress = (address.isEmpty || address == "Address")
+        ? 'Current Location'
+        : address;
+
     final success = await _apiService.placeOrder(
-      _descriptionController.text.trim(),
+      description,
       location.lat,
       location.lng,
-      _addressController.text.trim().isEmpty ? 'Current Location' : _addressController.text.trim(),
+      finalAddress,
     );
 
     if (success) {
-      _descriptionController.clear();
+      _descriptionController.text = "Order Description"; // Reset to placeholder
       _specialInstructionsController.clear();
       _loadOrders();
       ScaffoldMessenger.of(context).showSnackBar(
@@ -127,8 +178,18 @@ class _CustomerHomeState extends State<CustomerHome> {
     }
   }
 
+  void _showOrdersBottomSheet() {
+    OrdersBottomSheet.show(
+      context: context,
+      orders: _orders,
+      isLoading: _isLoading,
+      onRefresh: _loadOrders,
+    );
+  }
+
   @override
   void dispose() {
+    _rotationAnimationController.dispose();
     _descriptionController.dispose();
     _customerNameController.dispose();
     _phoneNumberController.dispose();
@@ -144,137 +205,229 @@ class _CustomerHomeState extends State<CustomerHome> {
     final authProvider = Provider.of<AuthProvider>(context);
 
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: AppBar(
-        title: Text('Customer Dashboard'),
-        actions: [
-          IconButton(
-            icon: Icon(Icons.logout),
-            onPressed: () async {
-              await authProvider.logout();
-              Navigator.pushReplacementNamed(context, '/');
-            },
-          ),
-        ],
-      ),
-      body: Column(
-        children: [
-          // Order Placement Card
-          Card(
-            margin: EdgeInsets.all(16),
-            child: Padding(
-              padding: EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
+        backgroundColor: Colors.white,
+        elevation: 0,
+        titleSpacing: 0,
+        title: Row(
+          children: [
+            Padding(
+              padding: const EdgeInsets.only(left: 19.0),
+              child: BrandLogo(
+                size: 20,
+                showVersion: false,
+              ),
+            ),
+            Spacer(),
+            GestureDetector(
+              onTap: _showOrdersBottomSheet,
+              child: Row(
                 children: [
-                  Text('Place New Order', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                  SizedBox(height: 12),
-
-                  // 1. Order Description field (editable)
-                  TextField(
-                    controller: _descriptionController,
-                    decoration: InputDecoration(
-                      labelText: 'Order Description',
-                      hintText: 'What would you like to order?',
-                      border: OutlineInputBorder(),
-                    ),
-                    maxLines: 2,
+                  Icon(
+                    Icons.keyboard_arrow_down,
+                    color: Color(0xFFA6A6A6),
+                    size: 20,
                   ),
-                  SizedBox(height: 12),
-
-                  // 2. Latitude field (disabled - injected from location service)
-                  TextField(
-                    controller: _latitudeController,
-                    enabled: false,
-                    decoration: InputDecoration(
-                      labelText: 'Latitude',
-                      border: OutlineInputBorder(),
-                      filled: true,
-                      fillColor: Colors.grey[100],
-                      suffixIcon: IconButton(
-                        icon: Icon(Icons.refresh),
-                        onPressed: _getCurrentLocation,
-                        tooltip: 'Refresh location',
-                      ),
+                  SizedBox(width: 4),
+                  Text(
+                    'view orders',
+                    style: TextStyle(
+                      fontSize: 15,
+                      color: Colors.blue,
+                      fontWeight: FontWeight.w500,
                     ),
-                  ),
-                  SizedBox(height: 12),
-
-                  // 3. Longitude field (disabled - injected from location service)
-                  TextField(
-                    controller: _longitudeController,
-                    enabled: false,
-                    decoration: InputDecoration(
-                      labelText: 'Longitude',
-                      border: OutlineInputBorder(),
-                      filled: true,
-                      fillColor: Colors.grey[100],
-                    ),
-                  ),
-                  SizedBox(height: 12),
-
-                  // 4. Address field (editable)
-                  TextField(
-                    controller: _addressController,
-                    decoration: InputDecoration(
-                      labelText: 'Delivery Address',
-                      hintText: 'Enter your delivery address',
-                      border: OutlineInputBorder(),
-                    ),
-                    maxLines: 2,
-                  ),
-                  SizedBox(height: 12),
-
-                  ElevatedButton(
-                    onPressed: _placeOrder,
-                    child: Text('Place Order'),
                   ),
                 ],
               ),
             ),
-          ),
-
-          // Orders List
-          Expanded(
-            child: _isLoading
-                ? Center(child: CircularProgressIndicator())
-                : RefreshIndicator(
-              onRefresh: _loadOrders,
-              child: ListView.builder(
-                itemCount: _orders.length,
-                itemBuilder: (context, index) {
-                  final order = _orders[index];
-                  return Card(
-                    margin: EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-                    child: ListTile(
-                      title: Text('Order #${order.id}'),
-                      subtitle: Text('Status: ${order.status}\nTotal: \$${order.total.toStringAsFixed(2)}'),
-                      trailing: _getStatusIcon(order.status),
-                      isThreeLine: true,
-                    ),
-                  );
+            SizedBox(width: 5),
+            Padding(
+              padding: const EdgeInsets.only(right: 8.0),
+              child: IconButton(
+                icon: Icon(Icons.logout, color: Color(0xFFA6A6A6)),
+                onPressed: () async {
+                  await authProvider.logout();
+                  Navigator.pushReplacementNamed(context, '/');
                 },
               ),
             ),
+          ],
+        ),
+      ),
+      body: Padding(
+        padding: EdgeInsets.symmetric(horizontal: 20),
+        child: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Order',
+                style: TextStyle(
+                  fontSize: 36,
+                  fontFamily: 'hind',
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black87,
+                ),
+              ),
+
+              // Order Description
+              _buildTextField(
+                controller: _descriptionController,
+                label: '',
+                hintText: 'What would you like to order?',
+              ),
+
+              // Location Fields with Stacked Sync Icon
+              _buildLocationFields(),
+
+              // Address
+              _buildTextField(
+                controller: _addressController,
+                label: '',
+                hintText: 'Enter your delivery address',
+              ),
+              SizedBox(height: 40),
+
+              // Place Order Button
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: SizedBox(
+                  width: double.infinity,
+                  height: 50,
+                  child: ElevatedButton(
+                    onPressed: _placeOrder,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.blue,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      elevation: 0,
+                    ),
+                    child: Text(
+                      'Place Order',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
 
-  Widget _getStatusIcon(String status) {
-    switch (status) {
-      case 'NEW':
-        return Icon(Icons.schedule, color: Colors.orange);
-      case 'ACCEPTED':
-        return Icon(Icons.restaurant, color: Colors.blue);
-      case 'READY_FOR_PICKUP':
-        return Icon(Icons.check_circle, color: Colors.green);
-      case 'PICKED_UP':
-        return Icon(Icons.local_shipping, color: Colors.purple);
-      case 'DELIVERED':
-        return Icon(Icons.done_all, color: Colors.green);
-      default:
-        return Icon(Icons.help);
-    }
+  Widget _buildLocationFields() {
+    return Column(
+      children: [
+        // Latitude field with stacked sync icon
+        Stack(
+          children: [
+            _buildTextField(
+              controller: _latitudeController,
+              label: '',
+              enabled: false,
+            ),
+            // Positioned sync icon
+            Positioned(
+              right: 25, // Adjust to position within the text field
+              top: 35, // Adjust to center vertically within the text field
+              child: GestureDetector(
+                onTap: _isFetchingLocation ? null : _getCurrentLocation,
+                child: Container(
+                  padding: EdgeInsets.all(8),
+                  child: AnimatedBuilder(
+                    animation: _rotationAnimation,
+                    builder: (context, child) => Transform.rotate(
+                      angle: _rotationAnimation.value * 2 * 3.14159,
+                      child: Icon(
+                        Icons.sync,
+                        color: _isFetchingLocation ? Colors.grey : Colors.blue,
+                        size: 20,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+
+        // Longitude field (without icon)
+        _buildTextField(
+          controller: _longitudeController,
+          label: '',
+          enabled: false,
+        ),
+      ],
+    );
+  }
+
+  Widget _buildTextField({
+    required TextEditingController controller,
+    required String label,
+    String? hintText,
+    bool enabled = true,
+    Widget? suffixIcon,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w500,
+            color: Colors.black87,
+          ),
+        ),
+        SizedBox(height: 8),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 19),
+          child: Container(
+            decoration: BoxDecoration(
+              color: Colors.grey[50],
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: Colors.transparent),
+            ),
+            child: TextField(
+              controller: controller,
+              enabled: enabled,
+              onTap: () {
+                // Clear placeholder text when user taps on editable fields
+                if (enabled) {
+                  if (controller.text == label ||
+                      (controller == _descriptionController && controller.text == "Order Description") ||
+                      (controller == _addressController && controller.text == "Address")) {
+                    controller.clear();
+                  }
+                }
+              },
+              decoration: InputDecoration(
+                hintText: hintText,
+                hintStyle: TextStyle(
+                  color: Colors.grey[500],
+                  fontSize: 14,
+                ),
+                border: InputBorder.none,
+                contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                suffixIcon: suffixIcon,
+              ),
+              style: TextStyle(
+                fontSize: 14,
+                color: enabled ? Colors.black87 : Colors.grey[600],
+              ),
+            ),
+          ),
+        ),
+
+      ],
+    );
   }
 }

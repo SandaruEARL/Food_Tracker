@@ -37,7 +37,7 @@ class CustomTabBar extends StatelessWidget {
         indicatorColor: indicatorColor,
         labelColor: labelColor,
         unselectedLabelColor: unselectedLabelColor,
-        labelStyle: labelStyle ?? TextStyle(fontWeight: FontWeight.bold),
+        labelStyle: labelStyle ?? TextStyle(fontWeight: FontWeight.bold, fontFamily: 'hind'),
         unselectedLabelStyle: unselectedLabelStyle ?? TextStyle(fontWeight: FontWeight.normal),
         tabs: tabTitles
             .map((title) => Tab(text: title.toUpperCase()))
