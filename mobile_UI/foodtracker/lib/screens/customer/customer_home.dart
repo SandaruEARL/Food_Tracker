@@ -1,5 +1,6 @@
 // lib/screens/customer/customer_home.dart
 import 'package:flutter/material.dart';
+import 'package:foodtracker/utils/constants.dart';
 import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../services/api_service.dart';
@@ -179,12 +180,7 @@ class _CustomerHomeState extends State<CustomerHome> with TickerProviderStateMix
   }
 
   void _showOrdersBottomSheet() {
-    OrdersBottomSheet.show(
-      context: context,
-      orders: _orders,
-      isLoading: _isLoading,
-      onRefresh: _loadOrders,
-    );
+    OrdersBottomSheet.show(context);
   }
 
   @override

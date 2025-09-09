@@ -45,12 +45,12 @@ class Order {
 
   factory Order.fromJson(Map<String, dynamic> json) {
     return Order(
-      id: json['id'],
-      customerId: json['customerId'],
+      id: json['id'] ?? 0,
+      customerId: json['customerId'] ?? 0,
       restaurantId: json['restaurantId'],
       driverId: json['driverId'],
-      status: json['status'],
-      total: (json['total'] as num).toDouble(),
+      status: json['status'] ?? 'unknown',
+      total: (json['total'] as num?)?.toDouble() ?? 0.0,
       items: json['items'] != null
           ? (json['items'] as List).map((item) => OrderItem.fromJson(item)).toList()
           : null,
