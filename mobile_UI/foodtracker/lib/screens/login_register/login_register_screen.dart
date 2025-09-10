@@ -207,6 +207,7 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
   }
 
   Widget _buildSocialLoginButtons() {
+
     return Column(
       children: [
         SizedBox(height: 24),

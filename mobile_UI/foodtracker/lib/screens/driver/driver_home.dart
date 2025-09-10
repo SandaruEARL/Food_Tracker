@@ -1,12 +1,16 @@
 // lib/screens/driver/driver_home.dart
 import 'package:flutter/material.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:foodtracker/widgets/brand_logo.dart';
 import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../services/api_service.dart';
 import '../../services/location_service.dart';
 import '../../models/order.dart';
 import '../../utils/constants.dart';
-
+import 'driver_dashboard_page.dart';
+import 'driver_profile.dart';
+import 'manage_orders_page.dart';
 
 class DriverHome extends StatefulWidget {
   @override
@@ -17,9 +21,10 @@ class _DriverHomeState extends State<DriverHome> {
   final ApiService _apiService = ApiService();
   final LocationService _locationService = LocationService();
   List<Order> _availableOrders = [];
+  List<Order> _activeOrders = [];
   List<Order> _myOrders = [];
   bool _isLoading = false;
-  int _currentIndex = 0;
+  int _currentPageIndex = 0;
 
   @override
   void initState() {
@@ -32,14 +37,19 @@ class _DriverHomeState extends State<DriverHome> {
   void _setupWebSocketListeners() {
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
     authProvider.webSocketService.onNewOrdersAvailable = (orders) {
-      setState(() => _availableOrders = orders);
+      setState(() {
+        _availableOrders = orders.where((o) => o.status == OrderStatus.readyForPickup).toList();
+        _activeOrders = orders.where((o) => o.status == OrderStatus.pickedUp).toList();
+      });
     };
   }
 
   void _setupLocationTracking() {
     _locationService.onLocationUpdate = (location) {
-      // Send location to WebSocket if driver is on active delivery
-      final activeOrder = _myOrders.where((o) => o.status == OrderStatus.pickedUp).firstOrNull;
+      final activeOrder = _activeOrders.firstWhere(
+            (o) => o.status == OrderStatus.pickedUp,
+        orElse: () => null as Order,
+      );
       if (activeOrder != null) {
         final authProvider = Provider.of<AuthProvider>(context, listen: false);
         authProvider.webSocketService.sendDriverLocation(
@@ -56,7 +66,8 @@ class _DriverHomeState extends State<DriverHome> {
     final available = await _apiService.getAvailableOrdersDriver();
     final relevant = await _apiService.getRelevantOrders();
     setState(() {
-      _availableOrders = available;
+      _availableOrders = available.where((o) => o.status == OrderStatus.readyForPickup).toList();
+      _activeOrders = relevant.where((o) => o.status == OrderStatus.pickedUp).toList();
       _myOrders = relevant;
       _isLoading = false;
     });
@@ -80,98 +91,91 @@ class _DriverHomeState extends State<DriverHome> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('Driver Dashboard'),
+        title: Row(
+          children: [
+            BrandLogo(size: 20,),
+          ],
+        ),
         actions: [
-          IconButton(
-            icon: Icon(Icons.logout),
-            onPressed: () async {
-              await authProvider.logout();
-              Navigator.pushReplacementNamed(context, '/');
-            },
+          Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            SizedBox(width: 4),
+            GestureDetector(
+              onTap: (){},
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.keyboard_arrow_down,
+                    color: Color(0xFFA6A6A6),
+                    size: 20,
+                  ),
+                  SizedBox(width: 4),
+                  Text(
+                    'view orders',
+                    style: TextStyle(
+                      fontSize: 15,
+                      color: Colors.blue,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+          ),
+          Padding(
+            padding: const EdgeInsets.only(right: 8.0),
+            child: IconButton(
+              icon: Icon(Icons.logout, color: Color(0xFFA6A6A6)),
+              onPressed: () async {
+                await authProvider.logout();
+                Navigator.pushReplacementNamed(context, '/');
+              },
+            ),
           ),
         ],
       ),
       body: IndexedStack(
-        index: _currentIndex,
+        index: _currentPageIndex,
         children: [
-          _buildAvailableOrdersTab(),
-          _buildMyOrdersTab(),
+          DriverDashboardPage(
+            availableOrders: _availableOrders,
+            activeOrders: _activeOrders,
+            isLoading: _isLoading,
+            onRefresh: _loadOrders,
+            onUpdateOrderStatus: _updateOrderStatus,
+          ),
+          ManageOrdersPage(
+            myOrders: _myOrders,
+            isLoading: _isLoading,
+            onRefresh: _loadOrders,
+            onUpdateOrderStatus: _updateOrderStatus,
+          ),
+          DriverProfilePage(),
         ],
       ),
       bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _currentIndex,
-        onTap: (index) => setState(() => _currentIndex = index),
+        currentIndex: _currentPageIndex,
+        onTap: (index) => setState(() => _currentPageIndex = index),
+        type: BottomNavigationBarType.fixed,
+        selectedItemColor: Colors.blue,
+        unselectedItemColor: Colors.grey,
         items: [
           BottomNavigationBarItem(
-            icon: Icon(Icons.local_shipping),
-            label: 'Available',
+            icon: Icon(Icons.dashboard),
+            label: '',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.assignment),
-            label: 'My Orders',
+            icon: Icon(FontAwesomeIcons.truck),
+            label: '',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.account_circle_outlined),
+            label: '',
           ),
         ],
       ),
     );
-  }
-
-  Widget _buildAvailableOrdersTab() {
-    return _isLoading
-        ? Center(child: CircularProgressIndicator())
-        : RefreshIndicator(
-      onRefresh: _loadOrders,
-      child: ListView.builder(
-        itemCount: _availableOrders.length,
-        itemBuilder: (context, index) {
-          final order = _availableOrders[index];
-          return Card(
-            margin: EdgeInsets.all(8),
-            child: ListTile(
-              title: Text('Order #${order.id}'),
-              subtitle: Text('Total: \$${order.total.toStringAsFixed(2)}'),
-              trailing: ElevatedButton(
-                onPressed: () => _updateOrderStatus(order.id, OrderStatus.pickedUp),
-                child: Text('Pick Up'),
-              ),
-            ),
-          );
-        },
-      ),
-    );
-  }
-
-  Widget _buildMyOrdersTab() {
-    return _isLoading
-        ? Center(child: CircularProgressIndicator())
-        : RefreshIndicator(
-      onRefresh: _loadOrders,
-      child: ListView.builder(
-        itemCount: _myOrders.length,
-        itemBuilder: (context, index) {
-          final order = _myOrders[index];
-          return Card(
-            margin: EdgeInsets.all(8),
-            child: ListTile(
-              title: Text('Order #${order.id}'),
-              subtitle: Text('Status: ${order.status}\nTotal: \$${order.total.toStringAsFixed(2)}'),
-              trailing: _getActionButton(order),
-              isThreeLine: true,
-            ),
-          );
-        },
-      ),
-    );
-  }
-
-  Widget? _getActionButton(Order order) {
-    switch (order.status) {
-      case OrderStatus.pickedUp:
-        return ElevatedButton(
-          onPressed: () => _updateOrderStatus(order.id, OrderStatus.delivered),
-          child: Text('Deliver'),
-        );
-      default:
-        return null;
-    }
   }
 }

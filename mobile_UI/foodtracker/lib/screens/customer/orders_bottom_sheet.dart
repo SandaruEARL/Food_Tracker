@@ -1,6 +1,7 @@
 // lib/widgets/orders_bottom_sheet.dart
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:intl/intl.dart';
 import '../../models/order.dart';
 import '../../providers/auth_provider.dart';
 import '../../services/api_service.dart';
@@ -26,6 +27,8 @@ class _OrdersBottomSheetState extends State<OrdersBottomSheet> {
   final ApiService _apiService = ApiService();
   List<Order> _orders = [];
   bool _isLoading = true;
+  bool _isClearing = false;
+  Map<String, DateTime> deliveryTimes = {}; // Store delivery times by order ID
 
   @override
   void initState() {
@@ -41,7 +44,19 @@ class _OrdersBottomSheetState extends State<OrdersBottomSheet> {
         setState(() {
           final index = _orders.indexWhere((o) => o.id == order.id);
           if (index != -1) {
+            final previousOrder = _orders[index];
+
+            // Check if status changed to delivered
+            if (!_isDelivered(previousOrder.status) && _isDelivered(order.status)) {
+              deliveryTimes[order.id.toString()] = DateTime.now();
+            }
+
             _orders[index] = order;
+          } else {
+            // New order, check if it's already delivered
+            if (_isDelivered(order.status)) {
+              deliveryTimes[order.id.toString()] = DateTime.now();
+            }
           }
         });
       }
@@ -55,6 +70,18 @@ class _OrdersBottomSheetState extends State<OrdersBottomSheet> {
         setState(() {
           _orders = orders;
           _isLoading = false;
+
+          // Debug: Print order details
+          for (final order in orders) {
+            print('Order ${order.id}:');
+            print('  - createdAt: ${order.createdAt}');
+            print('  - status: ${order.status}');
+            print('  - description: ${order.description}');
+
+            if (_isDelivered(order.status) && !deliveryTimes.containsKey(order.id.toString())) {
+              deliveryTimes[order.id.toString()] = DateTime.now();
+            }
+          }
         });
       }
     } catch (e) {
@@ -64,6 +91,14 @@ class _OrdersBottomSheetState extends State<OrdersBottomSheet> {
         });
       }
     }
+  }
+  String _getCurrentDateTitle() {
+    final now = DateTime.now();
+    final dayFormatter = DateFormat('EEEE'); // Full day name
+    final monthDayFormatter = DateFormat('MMM d'); // Abbreviated month name and day number
+    final yearFormatter = DateFormat('y'); // Year
+
+    return '${dayFormatter.format(now)}, ${monthDayFormatter.format(now)}, ${yearFormatter.format(now)}';
   }
 
   @override
@@ -92,25 +127,42 @@ class _OrdersBottomSheetState extends State<OrdersBottomSheet> {
               padding: const EdgeInsets.symmetric(horizontal: 20),
               child: Row(
                 children: [
-                  Text(
-                    'Your Orders',
-                    style: TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black87,
+                  Expanded(
+                    child: Text(
+                      _getCurrentDateTitle(),
+                      style: TextStyle(
+                        fontSize: 23,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black87,
+                      ),
                     ),
                   ),
-                  Spacer(),
+                  // Close button
                   IconButton(
-                    icon: Icon(Icons.refresh, color: Colors.blue),
-                    onPressed: _loadOrders,
+                    icon: Icon(Icons.close, color: Colors.grey[600]),
+                    onPressed: () => Navigator.of(context).pop(),
+                    tooltip: 'Close',
                   ),
                 ],
               ),
             ),
             Expanded(
-              child: _isLoading
-                  ? Center(child: CircularProgressIndicator())
+              child: _isLoading || _isClearing
+                  ? Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    CircularProgressIndicator(),
+                    if (_isClearing) ...[
+                      SizedBox(height: 16),
+                      Text(
+                        'Clearing order history...',
+                        style: TextStyle(color: Colors.grey[600]),
+                      ),
+                    ],
+                  ],
+                ),
+              )
                   : _orders.isEmpty
                   ? _buildEmptyState()
                   : ListView.builder(
@@ -180,85 +232,52 @@ class _OrdersBottomSheetState extends State<OrdersBottomSheet> {
           SizedBox(height: 12),
           if (order.description?.isNotEmpty == true)
             Text(order.description!, style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
-          SizedBox(height: 8),
-
-
-          _buildStatusDots(order.status),
           SizedBox(height: 12),
-          Row(
-            children: [
-              Icon(Icons.access_time, size: 16, color: Colors.grey[600]),
-              SizedBox(width: 4),
-              Text(
-                _formatTime(order.createdAt),
-                style: TextStyle(fontSize: 12, color: Colors.grey[600]),
-              ),
-            ],
-          ),
+          _buildTimeInfo(order),
         ],
       ),
     );
   }
 
-  Widget _buildStatusDots(dynamic status) {
-    final statuses = ['NEW', 'ACCEPTED', 'READY_FOR_PICKUP', 'PICKED_UP', 'DELIVERED'];
-    final statusNames = ['New', 'Accepted', 'Ready', 'Picked Up', 'Delivered'];
-    final currentIndex = _getStatusIndex(status);
-
+  Widget _buildTimeInfo(Order order) {
     return Row(
-      children: statuses.asMap().entries.map((entry) {
-        final index = entry.key;
-        final isActive = index <= currentIndex;
-
-        return Expanded(
-          child: Column(
+      children: [
+        // Placed time - only use createdAt
+        Expanded(
+          child: Row(
             children: [
-              Container(
-                width: 20,
-                height: 20,
-                decoration: BoxDecoration(
-                  color: isActive ? Colors.blue : Colors.grey[300],
-                  shape: BoxShape.circle,
-                ),
-                child: isActive
-                    ? Icon(Icons.check, size: 12, color: Colors.white)
-                    : null,
-              ),
-              SizedBox(height: 4),
-              Text(
-                statusNames[index],
-                style: TextStyle(
-                  fontSize: 10,
-                  color: isActive ? Colors.blue : Colors.grey[600],
-                  fontWeight: index == currentIndex ? FontWeight.w600 : FontWeight.normal,
-                ),
-                textAlign: TextAlign.center,
-              ),
+
+              SizedBox(width: 4),
+
             ],
           ),
-        );
-      }).toList(),
+        ),
+        SizedBox(width: 16),
+        // Delivered time (only show if delivered)
+        if (_isDelivered(order.status))
+          Expanded(
+            child: Row(
+              children: [
+                Icon(Icons.check_circle, size: 16, color: Colors.green),
+                SizedBox(width: 4),
+                Text(
+                  'Delivered: ${_formatOrderTime(deliveryTimes[order.id.toString()])}',
+                  style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                ),
+              ],
+            ),
+          )
+        else
+          Expanded(child: SizedBox()),
+      ],
     );
   }
 
-  int _getStatusIndex(dynamic status) {
+
+
+  bool _isDelivered(dynamic status) {
     final statusStr = status.toString().toUpperCase();
-    switch (statusStr) {
-      case 'NEW':
-      case 'NEW_ORDER':
-        return 0;
-      case 'ACCEPTED':
-        return 1;
-      case 'READY_FOR_PICKUP':
-      case 'READY':
-        return 2;
-      case 'PICKED_UP':
-        return 3;
-      case 'DELIVERED':
-        return 4;
-      default:
-        return 0;
-    }
+    return statusStr == 'DELIVERED';
   }
 
   String _getStatusText(dynamic status) {
@@ -266,18 +285,18 @@ class _OrdersBottomSheetState extends State<OrdersBottomSheet> {
     switch (statusStr) {
       case 'NEW':
       case 'NEW_ORDER':
-        return 'New Order';
+        return 'New';
       case 'ACCEPTED':
         return 'Accepted';
       case 'READY_FOR_PICKUP':
       case 'READY':
-        return 'Ready for Pickup';
+        return 'Ready';
       case 'PICKED_UP':
         return 'Picked Up';
       case 'DELIVERED':
         return 'Delivered';
       default:
-        return 'New Order';
+        return 'New';
     }
   }
 
@@ -301,15 +320,14 @@ class _OrdersBottomSheetState extends State<OrdersBottomSheet> {
     }
   }
 
-  String _formatTime(DateTime? dateTime) {
-    if (dateTime == null) return 'Unknown time';
+  String _formatOrderTime(DateTime? dateTime) {
+    if (dateTime == null) return 'N/A';
 
-    final now = DateTime.now();
-    final diff = now.difference(dateTime);
-
-    if (diff.inMinutes < 1) return 'Just now';
-    if (diff.inMinutes < 60) return '${diff.inMinutes}m ago';
-    if (diff.inHours < 24) return '${diff.inHours}h ago';
-    return '${dateTime.day}/${dateTime.month}/${dateTime.year}';
+    try {
+      final timeFormatter = DateFormat('h:mm a');
+      return timeFormatter.format(dateTime);
+    } catch (e) {
+      return 'N/A';
+    }
   }
 }

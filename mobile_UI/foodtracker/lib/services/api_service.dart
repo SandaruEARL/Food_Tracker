@@ -155,6 +155,7 @@ class ApiService {
         Uri.parse('$baseUrl/api/order/getrelavant'),
         headers: await _getHeaders(requireAuth: true),
       );
+      print('Get orders response: ${response.body}');
 
       if (response.statusCode == 200) {
         final List<dynamic> data = jsonDecode(response.body);
