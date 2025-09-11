@@ -2,6 +2,8 @@
 import 'package:flutter/material.dart';
 import '../../models/order.dart';
 import '../../utils/constants.dart';
+import 'package:intl/intl.dart';
+import '../../widgets/custom_button.dart';
 import '../../widgets/custom_tab_bar.dart';
 import 'order_details_bottom_sheet.dart';
 
@@ -48,23 +50,35 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
         Row(
           children: [
             Container(
-              padding: EdgeInsets.symmetric(horizontal: 16, vertical: 5),
+              padding: EdgeInsets.symmetric( vertical: 5),
               child: Column(
                 children: [
-                  Text(
-                    'Driver Dashboard',
-                    style: TextStyle(
-                      fontSize: 36,
-                      fontFamily: 'hind',
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  Text(
-                    'Saturday, September 6, 2025, 11:35 AM',
-                    style: TextStyle(
-                        fontSize: 16,
-                        fontFamily: 'hind',
-                        fontWeight: FontWeight.bold
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 15),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Text(
+                              'Driver Dashboard',
+                              style: TextStyle(
+                                fontSize: 30,
+                                fontFamily: 'hind',
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
+                        Text(
+                          _getCurrentDateTitle(),
+                          style: TextStyle(
+                              fontSize: 16,
+                              fontFamily: 'hind',
+                              fontWeight: FontWeight.bold
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ],
@@ -94,6 +108,18 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
       ],
     );
   }
+
+  String _getCurrentDateTitle() {
+    final now = DateTime.now();
+
+    final dayFormatter = DateFormat('EEEE'); // Full day name
+    final monthDayFormatter = DateFormat('MMMM d'); // Month and day number
+    final yearFormatter = DateFormat('y'); // Year
+    final timeFormatter = DateFormat('hh:mm a'); // Time with AM/PM
+
+    return '${dayFormatter.format(now)}, ${monthDayFormatter.format(now)}, ${yearFormatter.format(now)}, ${timeFormatter.format(now)}';
+  }
+
 
   void _showOrderDetails(Order order, bool isActiveOrder) {
     OrderDetailsBottomSheet.show(
@@ -143,30 +169,18 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
                 ),
               ],
             ),
-            trailing: Container(
-              padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              decoration: BoxDecoration(
-                color: isActiveOrder ? Color(0xFFD2A146) : Colors.green,
-                borderRadius: BorderRadius.circular(isActiveOrder ? 10 : 20),
-              ),
-              child: InkWell(
-                onTap: () {
-                  // Prevent the tap from bubbling up to the card
-                  if (isActiveOrder) {
-                    widget.onUpdateOrderStatus(order.id, OrderStatus.delivered);
-                  } else {
-                    widget.onUpdateOrderStatus(order.id, OrderStatus.pickedUp);
-                  }
-                },
-                child: Text(
-                  isActiveOrder ? 'Mark Delivered' : 'Approve',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w600,
-                    fontSize: 12,
-                  ),
+            trailing: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                OrderActionButton(
+                  isActiveOrder: isActiveOrder,
+                  orderId: order.id,
+                  onUpdateOrderStatus: widget.onUpdateOrderStatus,
                 ),
-              ),
+
+                SizedBox(width: 5,),
+                Icon(Icons.keyboard_arrow_right,color: Color(0XFFA49E9E),)
+              ],
             ),
             isThreeLine: false,
           ),
@@ -177,8 +191,9 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
 
   Widget _buildAvailableOrdersTab() {
     return widget.isLoading
-        ? Center(child: CircularProgressIndicator())
+        ? Center()
         : RefreshIndicator(
+      color: Color(0xFF0386D0),
       onRefresh: () async => widget.onRefresh(),
       child: ListView.builder(
         padding: EdgeInsets.all(16),
@@ -191,63 +206,57 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
   }
 
   Widget _buildActiveOrdersTab() {
-    return widget.isLoading
-        ? Center(child: CircularProgressIndicator())
-        : RefreshIndicator(
-      onRefresh: () async => widget.onRefresh(),
-      child: widget.activeOrders.isEmpty
-          ? Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.local_shipping, size: 64, color: Colors.grey),
-            SizedBox(height: 16),
-            Text(
-              'No active orders',
-              style: TextStyle(
-                fontSize: 18,
-                color: Colors.grey[600],
-              ),
+
+    return widget.activeOrders.isEmpty
+        ? Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.local_shipping, size: 64, color: Colors.grey),
+          SizedBox(height: 16),
+          Text(
+            'No active orders',
+            style: TextStyle(
+              fontSize: 18,
+              color: Colors.grey[600],
             ),
-          ],
-        ),
-      )
-          : ListView.builder(
-        padding: EdgeInsets.all(16),
-        itemCount: widget.activeOrders.length,
-        itemBuilder: (context, index) {
-          return _buildOrderCard(widget.activeOrders[index], true);
-        },
+          ),
+        ],
       ),
+    )
+        : ListView.builder(
+      padding: EdgeInsets.all(16),
+      itemCount: widget.activeOrders.length,
+      itemBuilder: (context, index) {
+        return _buildOrderCard(widget.activeOrders[index], true);
+      },
     );
+    }
   }
 
   Widget _buildDeliveryMapTab() {
-    return Container(
-      child: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.map, size: 64, color: Colors.grey),
-            SizedBox(height: 16),
-            Text(
-              'Delivery Map',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: Colors.grey[600],
-              ),
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.map, size: 64, color: Colors.grey),
+          SizedBox(height: 16),
+          Text(
+            'Delivery Map',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: Colors.grey[600],
             ),
-            SizedBox(height: 8),
-            Text(
-              'Map integration coming soon',
-              style: TextStyle(
-                color: Colors.grey[600],
-              ),
+          ),
+          SizedBox(height: 8),
+          Text(
+            'Map integration coming soon',
+            style: TextStyle(
+              color: Colors.grey[600],
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
-}

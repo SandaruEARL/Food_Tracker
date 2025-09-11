@@ -1,6 +1,5 @@
 // lib/screens/customer/customer_home.dart
 import 'package:flutter/material.dart';
-import 'package:foodtracker/utils/constants.dart';
 import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../services/api_service.dart';
@@ -230,8 +229,9 @@ class _CustomerHomeState extends State<CustomerHome> with TickerProviderStateMix
                     'view orders',
                     style: TextStyle(
                       fontSize: 15,
-                      color: Colors.blue,
-                      fontWeight: FontWeight.w500,
+                      fontFamily: 'hind',
+                      color: Color(0xFF0386D0),
+                      fontWeight: FontWeight.bold,
                     ),
                   ),
                 ],
@@ -294,7 +294,7 @@ class _CustomerHomeState extends State<CustomerHome> with TickerProviderStateMix
                   child: ElevatedButton(
                     onPressed: _placeOrder,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.blue,
+                      backgroundColor: Color(0xFF0386D0),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(8),
                       ),
@@ -344,7 +344,7 @@ class _CustomerHomeState extends State<CustomerHome> with TickerProviderStateMix
                       angle: _rotationAnimation.value * 2 * 3.14159,
                       child: Icon(
                         Icons.sync,
-                        color: _isFetchingLocation ? Colors.grey : Colors.blue,
+                        color: _isFetchingLocation ? Colors.grey : Color(0xFF0386D0),
                         size: 20,
                       ),
                     ),

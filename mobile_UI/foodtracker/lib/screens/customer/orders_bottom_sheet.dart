@@ -1,11 +1,12 @@
 // lib/widgets/orders_bottom_sheet.dart
 import 'package:flutter/material.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import '../../models/order.dart';
 import '../../providers/auth_provider.dart';
 import '../../services/api_service.dart';
-import '../../utils/constants.dart';
+
 
 class OrdersBottomSheet extends StatefulWidget {
   const OrdersBottomSheet({Key? key}) : super(key: key);
@@ -92,6 +93,7 @@ class _OrdersBottomSheetState extends State<OrdersBottomSheet> {
       }
     }
   }
+
   String _getCurrentDateTitle() {
     final now = DateTime.now();
     final dayFormatter = DateFormat('EEEE'); // Full day name
@@ -127,21 +129,23 @@ class _OrdersBottomSheetState extends State<OrdersBottomSheet> {
               padding: const EdgeInsets.symmetric(horizontal: 20),
               child: Row(
                 children: [
-                  Expanded(
-                    child: Text(
-                      _getCurrentDateTitle(),
-                      style: TextStyle(
-                        fontSize: 23,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.black87,
-                      ),
+                  Text(
+                    _getCurrentDateTitle(),
+                    style: TextStyle(
+                      fontSize: 23,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black87,
                     ),
                   ),
                   // Close button
-                  IconButton(
-                    icon: Icon(Icons.close, color: Colors.grey[600]),
-                    onPressed: () => Navigator.of(context).pop(),
-                    tooltip: 'Close',
+                  Expanded(
+                    child: IconButton(
+                      icon: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal:40),
+                        child: Icon(FontAwesomeIcons.timesCircle, color: Colors.grey[600]),
+                      ),
+                      onPressed: () => Navigator.of(context).pop(),
+                    ),
                   ),
                 ],
               ),

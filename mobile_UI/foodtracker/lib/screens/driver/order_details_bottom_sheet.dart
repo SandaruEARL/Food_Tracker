@@ -1,21 +1,22 @@
 // lib/widgets/order_details_bottom_sheet.dart
 import 'package:flutter/material.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 import '../../models/order.dart';
 import '../../utils/constants.dart';
 
 
-class OrderDetailsBottomSheet extends StatelessWidget {
+class OrderDetailsBottomSheet extends StatefulWidget {
   final Order order;
   final bool isActiveOrder;
   final Function(int orderId, String status) onUpdateOrderStatus;
 
   const OrderDetailsBottomSheet({
-    Key? key,
+    super.key,
     required this.order,
     required this.isActiveOrder,
     required this.onUpdateOrderStatus,
-  }) : super(key: key);
+  });
 
   static void show(
       BuildContext context, {
@@ -38,6 +39,11 @@ class OrderDetailsBottomSheet extends StatelessWidget {
   }
 
   @override
+  State<OrderDetailsBottomSheet> createState() => _OrderDetailsBottomSheetState();
+}
+
+class _OrderDetailsBottomSheetState extends State<OrderDetailsBottomSheet> {
+  @override
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
@@ -50,13 +56,13 @@ class OrderDetailsBottomSheet extends StatelessWidget {
       child: DraggableScrollableSheet(
         initialChildSize: 0.7,
         minChildSize: 0.5,
-        maxChildSize: 0.9,
+        maxChildSize: 0.7,
         expand: false,
         builder: (context, scrollController) {
           return SingleChildScrollView(
             controller: scrollController,
             child: Padding(
-              padding: EdgeInsets.all(20),
+              padding: EdgeInsets.symmetric(horizontal: 16,vertical: 22),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -74,110 +80,65 @@ class OrderDetailsBottomSheet extends StatelessWidget {
                   SizedBox(height: 20),
 
                   // Order ID Title
-                  Text(
-                    '#ORD-0000${order.id}',
-                    style: TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                      fontFamily: 'hind',
-                    ),
+
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                            '#ORD-0000${widget.order.id}',
+                            style: TextStyle(
+                              fontSize: 24,
+                              fontWeight: FontWeight.bold,
+                              fontFamily: 'hind',
+                            ),
+                      ),
+                      Expanded(
+                        child: IconButton(
+                          icon: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal:140),
+                            child: Icon(FontAwesomeIcons.timesCircle, color: Colors.grey[600]),
+                          ),
+                          onPressed: () => Navigator.of(context).pop(),
+                        ),
+                      ),
+                    ],
                   ),
+
+
+
                   SizedBox(height: 20),
 
                   // Description
-                  _buildDetailRow(
-                    'Description',
-                    order.description ??
-                        order.items?.map((item) => item.name).join(', ') ??
-                        'Order details not available',
-                  ),
-
-                  // Customer
-                  _buildDetailRow('Customer', 'Customer Name'), // You might want to add customer info to Order model
-
-                  // Customer Phone
-                  _buildDetailRow('Phone', '+94 71 234 ###'),
-
-                  // Restaurant
-                  _buildDetailRow('Restaurant', order.status ?? 'Restaurant Name'), // Add this to Order model if needed
-
-                  // Status
-                  _buildDetailRow(
-                    'Status',
-                    order.status,
-                    isStatus: true,
-                  ),
-
-                  // Order Items (if available)
-                  if (order.items != null && order.items!.isNotEmpty) ...[
-                    SizedBox(height: 20),
-                    Text(
-                      'Order Items',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        fontFamily: 'hind',
-                      ),
-                    ),
-                    SizedBox(height: 10),
-                    ...order.items!.map((item) => Container(
-                      margin: EdgeInsets.only(bottom: 8),
-                      padding: EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: Color(0xFFF6F5F5),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Expanded(
-                            child: Text(
-                              item.name,
-                              style: TextStyle(fontWeight: FontWeight.w500),
-                            ),
-                          ),
-                          Text(
-                            'x${item.quantity}',
-                            style: TextStyle(
-                              color: Colors.grey[600],
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ],
-                      ),
-                    )).toList(),
-                  ],
-
-                  SizedBox(height: 30),
-
-                  // Action Button
-                  SizedBox(
-                    width: double.infinity,
-                    height: 50,
-                    child: ElevatedButton(
-                      onPressed: () {
-                        Navigator.pop(context);
-                        if (isActiveOrder) {
-                          onUpdateOrderStatus(order.id, OrderStatus.delivered);
-                        } else {
-                          onUpdateOrderStatus(order.id, OrderStatus.pickedUp);
-                        }
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: isActiveOrder ? Color(0xFFD2A146) : Colors.green,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(25),
+                  Container(
+                    padding: EdgeInsets.all(15),
+                    decoration: BoxDecoration(color: Color(0xFFF6F5F5),borderRadius: BorderRadius.circular(10),),
+                    child: Column(
+                      children: [
+                        _buildDetailRow(
+                          'Description',
+                          widget.order.description ??
+                              widget.order.items?.map((item) => item.name).join(', ') ??
+                              'Order details not available',
                         ),
-                        elevation: 0,
-                      ),
-                      child: Text(
-                        isActiveOrder ? 'Mark Delivered' : 'Approve Order',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 16,
+
+                        // Customer
+                        _buildDetailRow('Customer', 'N/A'),
+
+                        // Customer Phone
+                        _buildDetailRow('Phone', 'N/A'),
+
+                        // Restaurant
+                        _buildDetailRow('Restaurant', 'N/A'),
+                        // Status
+                        _buildDetailRow(
+                          'Status',
+                          widget.order.status,
+                          isStatus: true,
                         ),
-                      ),
+
+                        // Actions with Button
+                        _buildActionRow(context),
+                      ],
                     ),
                   ),
 
@@ -194,7 +155,7 @@ class OrderDetailsBottomSheet extends StatelessWidget {
 
   Widget _buildDetailRow(String label, String value, {bool isStatus = false}) {
     return Padding(
-      padding: EdgeInsets.only(bottom: 16),
+      padding: EdgeInsets.only(bottom: 16,),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -210,36 +171,78 @@ class OrderDetailsBottomSheet extends StatelessWidget {
             ),
           ),
           Expanded(
-            child: isStatus
-                ? Container(
-              padding: EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-              decoration: BoxDecoration(
-                color: _getStatusColor(value).withOpacity(0.1),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: _getStatusColor(value),
-                  width: 1,
-                ),
-              ),
-              child: Text(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 30),
+              child: isStatus
+                  ? Text(
                 value.toUpperCase(),
                 style: TextStyle(
                   fontWeight: FontWeight.w600,
                   color: _getStatusColor(value),
                   fontSize: 12,
                 ),
-              ),
-            )
-                : Text(
-              value,
-              style: TextStyle(
-                fontWeight: FontWeight.w500,
-                fontSize: 14,
+              )
+                  : Text(
+                value,
+                style: TextStyle(
+                  fontWeight: FontWeight.w500,
+                  fontSize: 14,
+                ),
               ),
             ),
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildActionRow(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.end,
+      children: [
+        SizedBox(
+          child: Text(
+            'Actions:',
+            style: TextStyle(
+              fontWeight: FontWeight.w600,
+              color: Colors.grey[600],
+              fontSize: 14,
+            ),
+          ),
+        ),
+        SizedBox(width: 50,),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal:26.0),
+          child: Container(
+            padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            decoration: BoxDecoration(
+              color: widget.isActiveOrder ? Color(0xFFD2A146) : Colors.green,
+              borderRadius: BorderRadius.circular(widget.isActiveOrder ? 10 : 10),
+            ),
+            child: InkWell(
+              onTap: () {
+                // Close the bottom sheet first
+                Navigator.pop(context);
+
+                // Prevent the tap from bubbling up to the card
+                if (widget.isActiveOrder) {
+                  widget.onUpdateOrderStatus(widget.order.id, OrderStatus.delivered);
+                } else {
+                  widget.onUpdateOrderStatus(widget.order.id, OrderStatus.pickedUp);
+                }
+              },
+              child: Text(
+                widget.isActiveOrder ? 'Mark Delivered' : 'Approve',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w600,
+                  fontSize: 12,
+                ),
+              ),
+            ),
+          ),
+        ),
+      ],
     );
   }
 

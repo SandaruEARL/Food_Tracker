@@ -8,6 +8,7 @@ import '../../services/api_service.dart';
 import '../../services/location_service.dart';
 import '../../models/order.dart';
 import '../../utils/constants.dart';
+import 'completed_orders_bottom_sheet.dart';
 import 'driver_dashboard_page.dart';
 import 'driver_profile.dart';
 import 'manage_orders_page.dart';
@@ -23,6 +24,7 @@ class _DriverHomeState extends State<DriverHome> {
   List<Order> _availableOrders = [];
   List<Order> _activeOrders = [];
   List<Order> _myOrders = [];
+  List<Order> _completedOrders = [];
   bool _isLoading = false;
   int _currentPageIndex = 0;
 
@@ -68,6 +70,7 @@ class _DriverHomeState extends State<DriverHome> {
     setState(() {
       _availableOrders = available.where((o) => o.status == OrderStatus.readyForPickup).toList();
       _activeOrders = relevant.where((o) => o.status == OrderStatus.pickedUp).toList();
+      _completedOrders = relevant.where((o) => o.status == OrderStatus.delivered).toList();
       _myOrders = relevant;
       _isLoading = false;
     });
@@ -102,7 +105,14 @@ class _DriverHomeState extends State<DriverHome> {
           children: [
             SizedBox(width: 4),
             GestureDetector(
-              onTap: (){},
+              onTap: () {
+                CompletedOrdersBottomSheet.show(
+                  context,
+                  completedOrders: _completedOrders,
+                  isLoading: _isLoading,
+                  onRefresh: _loadOrders,
+                );
+              },
               child: Row(
                 children: [
                   Icon(
@@ -112,11 +122,12 @@ class _DriverHomeState extends State<DriverHome> {
                   ),
                   SizedBox(width: 4),
                   Text(
-                    'view orders',
+                    'Completed',
                     style: TextStyle(
                       fontSize: 15,
-                      color: Colors.blue,
-                      fontWeight: FontWeight.w500,
+                      fontFamily: 'hind',
+                      color: Color(0xFF0386D0),
+                      fontWeight: FontWeight.bold,
                     ),
                   ),
                 ],
@@ -159,7 +170,7 @@ class _DriverHomeState extends State<DriverHome> {
         currentIndex: _currentPageIndex,
         onTap: (index) => setState(() => _currentPageIndex = index),
         type: BottomNavigationBarType.fixed,
-        selectedItemColor: Colors.blue,
+        selectedItemColor: Color(0xFF0386D0),
         unselectedItemColor: Colors.grey,
         items: [
           BottomNavigationBarItem(
