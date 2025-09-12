@@ -1,11 +1,10 @@
 // lib/screens/driver/driver_dashboard_page.dart
 import 'package:flutter/material.dart';
 import '../../models/order.dart';
-import '../../utils/constants.dart';
 import 'package:intl/intl.dart';
 import '../../widgets/custom_button.dart';
 import '../../widgets/custom_tab_bar.dart';
-import 'order_details_bottom_sheet.dart';
+import 'bottom_sheets/order_details_bottom_sheet.dart';
 
 class DriverDashboardPage extends StatefulWidget {
   final List<Order> availableOrders;
@@ -13,6 +12,7 @@ class DriverDashboardPage extends StatefulWidget {
   final bool isLoading;
   final VoidCallback onRefresh;
   final Function(int orderId, String status) onUpdateOrderStatus;
+  final bool hasActiveOrders;
 
   const DriverDashboardPage({
     super.key,
@@ -21,6 +21,8 @@ class DriverDashboardPage extends StatefulWidget {
     required this.isLoading,
     required this.onRefresh,
     required this.onUpdateOrderStatus,
+    this.hasActiveOrders = false,
+
   });
 
   @override
@@ -121,12 +123,14 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
   }
 
 
-  void _showOrderDetails(Order order, bool isActiveOrder) {
+  void _showOrderDetails(Order order, bool isActiveOrder,) {
     OrderDetailsBottomSheet.show(
       context,
       order: order,
       isActiveOrder: isActiveOrder,
       onUpdateOrderStatus: widget.onUpdateOrderStatus,
+      hasActiveOrders: widget.activeOrders.isNotEmpty,
+
     );
   }
 
@@ -176,6 +180,7 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
                   isActiveOrder: isActiveOrder,
                   orderId: order.id,
                   onUpdateOrderStatus: widget.onUpdateOrderStatus,
+                  hasActiveOrders: widget.activeOrders.isNotEmpty,
                 ),
 
                 SizedBox(width: 5,),

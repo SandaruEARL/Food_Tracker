@@ -7,12 +7,16 @@ class OrderActionButton extends StatefulWidget {
   final bool isActiveOrder;
   final int orderId;
   final Function(int, String) onUpdateOrderStatus;
+  final bool hasActiveOrders;
+  final VoidCallback? onActionComplete;
 
   const OrderActionButton({
     super.key,
     required this.isActiveOrder,
     required this.orderId,
     required this.onUpdateOrderStatus,
+    this.hasActiveOrders = false,
+    this.onActionComplete,
   });
 
   @override
@@ -23,10 +27,13 @@ class _OrderActionButtonState extends State<OrderActionButton> {
   bool _isLoading = false;
 
   Future<void> _handleTap() async {
+    // Don't allow action if button is disabled
+    if (_isButtonDisabled()) return;
+
     setState(() => _isLoading = true);
 
     // Simulate network delay / API call
-    await Future.delayed(const Duration(seconds: 2));
+    await Future.delayed(const Duration(milliseconds: 500));
 
     if (widget.isActiveOrder) {
       widget.onUpdateOrderStatus(widget.orderId, OrderStatus.delivered);
@@ -35,16 +42,30 @@ class _OrderActionButtonState extends State<OrderActionButton> {
     }
 
     setState(() => _isLoading = false);
+
+    // Call the completion callback if provided
+    widget.onActionComplete?.call();
+  }
+
+  bool _isButtonDisabled() {
+    // Disable approve buttons when there are active orders
+    return !widget.isActiveOrder && widget.hasActiveOrders;
   }
 
   @override
   Widget build(BuildContext context) {
+    bool isDisabled = _isButtonDisabled();
+
     return GestureDetector(
-      onTap: _isLoading ? null : _handleTap,
+      onTap: (_isLoading || isDisabled) ? null : _handleTap,
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         decoration: BoxDecoration(
-          color: widget.isActiveOrder ? const Color(0xFFD2A146) : Colors.green,
+          color: isDisabled
+              ? Colors.grey[400] // Disabled color
+              : widget.isActiveOrder
+              ? const Color(0xFFD2A146)
+              : Colors.green,
           borderRadius: BorderRadius.circular(10),
         ),
         child: AnimatedSwitcher(
@@ -59,10 +80,10 @@ class _OrderActionButtonState extends State<OrderActionButton> {
             ),
           )
               : Text(
-            widget.isActiveOrder ? 'Mark Delivered' : 'Approve',
+            widget.isActiveOrder ? 'Mark Delivered' : 'Accept',
             key: ValueKey(widget.isActiveOrder),
-            style: const TextStyle(
-              color: Colors.white,
+            style: TextStyle(
+              color: isDisabled ? Colors.grey[600] : Colors.white,
               fontWeight: FontWeight.w600,
               fontSize: 12,
             ),

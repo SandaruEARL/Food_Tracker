@@ -4,6 +4,10 @@ import '../../models/order.dart';
 import 'package:intl/intl.dart';
 import '../../utils/constants.dart';
 import '../../widgets/custom_tab_bar.dart';
+import '../../widgets/custom_button.dart';
+import 'bottom_sheets/order_details_bottom_sheet.dart';
+import 'bottom_sheets/completed_orders_bottom_sheet.dart';
+import 'bottom_sheets/completed_order_details_sheet.dart';
 
 class ManageOrdersPage extends StatefulWidget {
   final List<Order> myOrders;
@@ -63,27 +67,30 @@ class _ManageOrdersPageState extends State<ManageOrdersPage>
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: EdgeInsets.symmetric(vertical: 5),
-      child: Column(
-        children: [
-          // Header Section
-          Row(
-            children: [
-              Column(
+    return Column(
+      children: [
+        Row(
+          children: [
+            Container(
+              padding: EdgeInsets.symmetric(vertical: 5),
+              child: Column(
                 children: [
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 15),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          'Manage Orders',
-                          style: TextStyle(
-                            fontSize: 30,
-                            fontFamily: 'hind',
-                            fontWeight: FontWeight.bold,
-                          ),
+                        Row(
+                          children: [
+                            Text(
+                              'Manage Orders',
+                              style: TextStyle(
+                                fontSize: 30,
+                                fontFamily: 'hind',
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
                         ),
                         Text(
                           _getCurrentDateTitle(),
@@ -97,39 +104,196 @@ class _ManageOrdersPageState extends State<ManageOrdersPage>
                   ),
                 ],
               ),
-            ],
-          ),
-          SizedBox(height: 20),
-
-          // Custom Tab Bar
-          CustomTabBar(
+            ),
+          ],
+        ),
+        CustomTabBar(
+          controller: _tabController,
+          tabTitles: _getTabTitlesWithCount(),
+          margin: EdgeInsets.symmetric(horizontal: 16),
+        ),
+        Expanded(
+          child: TabBarView(
             controller: _tabController,
-            tabTitles: _tabTitles,
-            margin: EdgeInsets.symmetric(horizontal: 15),
+            children: _tabTitles.asMap().entries.map((entry) {
+              final tabIndex = entry.key;
+              return _buildOrdersTab(tabIndex);
+            }).toList(),
           ),
-          SizedBox(height: 16),
+        ),
+      ],
+    );
+  }
 
-          // Tab Content
-          Expanded(
-            child: widget.isLoading
-                ? Center(child: CircularProgressIndicator())
-                : TabBarView(
-              controller: _tabController,
-              children: _tabTitles.asMap().entries.map((entry) {
-                final tabIndex = entry.key;
-                final filteredOrders = _getFilteredOrders(tabIndex);
+  List<String> _getTabTitlesWithCount() {
+    return [
+      'All(${widget.myOrders.length})',
+      'Pending(${_getFilteredOrders(1).length})',
+      'Progress(${_getFilteredOrders(2).length})',
+      'Complete(${_getFilteredOrders(3).length})',
+    ];
+  }
 
-                return RefreshIndicator(
-                  onRefresh: () async => widget.onRefresh(),
-                  child: filteredOrders.isEmpty
-                      ? _buildEmptyState(tabIndex)
-                      : _buildOrdersList(filteredOrders),
-                );
-              }).toList(),
+  Widget _buildOrdersTab(int tabIndex) {
+    final filteredOrders = _getFilteredOrders(tabIndex);
+
+    return widget.isLoading
+        ? Center()
+        : RefreshIndicator(
+      color: Color(0xFF0386D0),
+      onRefresh: () async => widget.onRefresh(),
+      child: filteredOrders.isEmpty
+          ? _buildEmptyState(tabIndex)
+          : ListView.builder(
+        padding: EdgeInsets.all(16),
+        itemCount: filteredOrders.length,
+        itemBuilder: (context, index) {
+          if (tabIndex == 3) { // Completed tab
+            return _buildCompletedOrderCard(filteredOrders[index]);
+          } else {
+            return _buildOrderCard(filteredOrders[index], tabIndex);
+          }
+        },
+      ),
+    );
+  }
+
+  // Cloned order card from driver dashboard for All, Pending, and In Progress tabs
+  Widget _buildOrderCard(Order order, int tabIndex) {
+    bool isActiveOrder = order.status == OrderStatus.pickedUp;
+
+    return Container(
+      margin: EdgeInsets.only(bottom: 12),
+      decoration: BoxDecoration(
+        color: Color(0xFFF6F5F5),
+        borderRadius: BorderRadius.circular(isActiveOrder ? 20 : 10),
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(isActiveOrder ? 20 : 10),
+          onTap: () => _showOrderDetails(order, isActiveOrder),
+          child: ListTile(
+            contentPadding: EdgeInsets.all(16),
+            title: Text(
+              '#ORD-0000${order.id}',
+              style: TextStyle(fontWeight: FontWeight.w600),
+            ),
+            subtitle: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                SizedBox(height: 4),
+                Text(
+                  order.description ??
+                      order.items?.map((item) => item.name).join(', ') ??
+                      'Order details not available',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w500,
+                    fontSize: 14,
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                Text(
+                  '+94 71 234 ###',
+                  style: TextStyle(color: Colors.grey[600]),
+                ),
+              ],
+            ),
+            trailing: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                OrderActionButton(
+                  isActiveOrder: isActiveOrder,
+                  orderId: order.id,
+                  onUpdateOrderStatus: widget.onUpdateOrderStatus,
+                  hasActiveOrders: _getFilteredOrders(2).isNotEmpty, // Check if there are orders in progress
+                ),
+                SizedBox(width: 5),
+                Icon(Icons.keyboard_arrow_right, color: Color(0XFFA49E9E)),
+              ],
+            ),
+            isThreeLine: false,
+          ),
+        ),
+      ),
+    );
+  }
+
+  // Cloned completed order card from completed orders bottom sheet
+  Widget _buildCompletedOrderCard(Order order) {
+    return GestureDetector(
+      onTap: () {
+        CompletedOrderDetailsSheet.show(
+          context,
+          order: order,
+        );
+      },
+      child: Container(
+        margin: EdgeInsets.only(bottom: 12),
+        decoration: BoxDecoration(
+          color: Color(0xFFF6F5F5),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: ListTile(
+          contentPadding: EdgeInsets.all(16),
+          title: Text(
+            '#ORD-0000${order.id}',
+            style: TextStyle(
+              fontWeight: FontWeight.w600,
+              fontSize: 16,
             ),
           ),
-        ],
+          subtitle: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              SizedBox(height: 6),
+              Text(
+                order.description ?? 'Order details not available',
+                style: TextStyle(
+                  fontWeight: FontWeight.w400,
+                  fontSize: 14,
+                  color: Colors.grey[600],
+                ),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+              SizedBox(height: 4),
+            ],
+          ),
+          trailing: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                order.status,
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 14,
+                  fontFamily: 'hind',
+                  color: Colors.green,
+                ),
+              ),
+              SizedBox(width: 6),
+              Icon(
+                Icons.arrow_forward_ios,
+                color: Colors.grey[400],
+                size: 16,
+              ),
+            ],
+          ),
+        ),
       ),
+    );
+  }
+
+  // Cloned order details method from driver dashboard
+  void _showOrderDetails(Order order, bool isActiveOrder) {
+    OrderDetailsBottomSheet.show(
+      context,
+      order: order,
+      isActiveOrder: isActiveOrder,
+      onUpdateOrderStatus: widget.onUpdateOrderStatus,
+      hasActiveOrders: _getFilteredOrders(2).isNotEmpty,
     );
   }
 
@@ -193,70 +357,6 @@ class _ManageOrdersPageState extends State<ManageOrdersPage>
     );
   }
 
-  Widget _buildOrdersList(List<Order> orders) {
-    return ListView.builder(
-      padding: EdgeInsets.symmetric(horizontal: 15),
-      itemCount: orders.length,
-      itemBuilder: (context, index) {
-        final order = orders[index];
-        return Card(
-          margin: EdgeInsets.only(bottom: 12),
-          elevation: 2,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: Padding(
-            padding: EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      'Order #${order.id}',
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
-                        fontFamily: 'hind',
-                      ),
-                    ),
-                    _buildStatusBadge(order.status),
-                  ],
-                ),
-                SizedBox(height: 8),
-                Text(
-                  'Total: \$${order.total.toStringAsFixed(2)}',
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: Colors.grey[600],
-                    fontFamily: 'hind',
-                  ),
-                ),
-                SizedBox(height: 8),
-                Text(
-                  'Customer: Customer Name',
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontFamily: 'hind',
-                  ),
-                ),
-                SizedBox(height: 12),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    if (_getActionButton(order) != null)
-                      _getActionButton(order)!,
-                  ],
-                ),
-              ],
-            ),
-          ),
-        );
-      },
-    );
-  }
-
   String _getCurrentDateTitle() {
     final now = DateTime.now();
 
@@ -266,74 +366,5 @@ class _ManageOrdersPageState extends State<ManageOrdersPage>
     final timeFormatter = DateFormat('hh:mm a'); // Time with AM/PM
 
     return '${dayFormatter.format(now)}, ${monthDayFormatter.format(now)}, ${yearFormatter.format(now)}, ${timeFormatter.format(now)}';
-  }
-
-  Widget _buildStatusBadge(String status) {
-    Color backgroundColor;
-    Color textColor;
-
-    switch (status) {
-      case OrderStatus.readyForPickup:
-        backgroundColor = Colors.orange.withOpacity(0.2);
-        textColor = Colors.orange[700]!;
-        break;
-      case OrderStatus.pickedUp:
-        backgroundColor = Colors.blue.withOpacity(0.2);
-        textColor = Colors.blue[700]!;
-        break;
-      case OrderStatus.delivered:
-        backgroundColor = Colors.green.withOpacity(0.2);
-        textColor = Colors.green[700]!;
-        break;
-      default:
-        backgroundColor = Colors.grey.withOpacity(0.2);
-        textColor = Colors.grey[700]!;
-    }
-
-    return Container(
-      padding: EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-      decoration: BoxDecoration(
-        color: backgroundColor,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Text(
-        status,
-        style: TextStyle(
-          color: textColor,
-          fontSize: 12,
-          fontWeight: FontWeight.w600,
-          fontFamily: 'hind',
-        ),
-      ),
-    );
-  }
-
-  Widget? _getActionButton(Order order) {
-    switch (order.status) {
-      case OrderStatus.pickedUp:
-        return ElevatedButton(
-          onPressed: () => widget.onUpdateOrderStatus(order.id, OrderStatus.delivered),
-          child: Text('Mark Delivered'),
-          style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.green,
-            foregroundColor: Colors.white,
-            padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            textStyle: TextStyle(fontFamily: 'hind'),
-          ),
-        );
-      case OrderStatus.readyForPickup:
-        return ElevatedButton(
-          onPressed: () => widget.onUpdateOrderStatus(order.id, OrderStatus.pickedUp),
-          child: Text('Accept Order'),
-          style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.blue,
-            foregroundColor: Colors.white,
-            padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            textStyle: TextStyle(fontFamily: 'hind'),
-          ),
-        );
-      default:
-        return null;
-    }
   }
 }

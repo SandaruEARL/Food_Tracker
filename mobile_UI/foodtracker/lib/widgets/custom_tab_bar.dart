@@ -34,10 +34,12 @@ class CustomTabBar extends StatelessWidget {
       child: TabBar(
         controller: controller,
         indicatorSize: TabBarIndicatorSize.tab,
+        isScrollable: true,
+        dividerColor:Color(0xFFF6F5F5),
         indicatorColor: indicatorColor,
         labelColor: labelColor,
         unselectedLabelColor: unselectedLabelColor,
-        labelStyle: labelStyle ?? TextStyle(fontWeight: FontWeight.bold, fontFamily: 'hind'),
+        labelStyle: labelStyle ?? TextStyle(fontWeight: FontWeight.bold, fontFamily: 'hind',),
         unselectedLabelStyle: unselectedLabelStyle ?? TextStyle(fontWeight: FontWeight.normal),
         tabs: tabTitles
             .map((title) => Tab(text: title.toUpperCase()))

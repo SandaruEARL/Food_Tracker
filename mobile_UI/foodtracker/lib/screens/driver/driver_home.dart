@@ -8,7 +8,8 @@ import '../../services/api_service.dart';
 import '../../services/location_service.dart';
 import '../../models/order.dart';
 import '../../utils/constants.dart';
-import 'completed_orders_bottom_sheet.dart';
+
+import 'bottom_sheets/completed_orders_bottom_sheet.dart';
 import 'driver_dashboard_page.dart';
 import 'driver_profile.dart';
 import 'manage_orders_page.dart';
@@ -101,39 +102,39 @@ class _DriverHomeState extends State<DriverHome> {
         ),
         actions: [
           Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            SizedBox(width: 4),
-            GestureDetector(
-              onTap: () {
-                CompletedOrdersBottomSheet.show(
-                  context,
-                  completedOrders: _completedOrders,
-                  isLoading: _isLoading,
-                  onRefresh: _loadOrders,
-                );
-              },
-              child: Row(
-                children: [
-                  Icon(
-                    Icons.keyboard_arrow_down,
-                    color: Color(0xFFA6A6A6),
-                    size: 20,
-                  ),
-                  SizedBox(width: 4),
-                  Text(
-                    'Completed',
-                    style: TextStyle(
-                      fontSize: 15,
-                      fontFamily: 'hind',
-                      color: Color(0xFF0386D0),
-                      fontWeight: FontWeight.bold,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              SizedBox(width: 4),
+              GestureDetector(
+                onTap: () {
+                  CompletedOrdersBottomSheet.show(
+                    context,
+                    completedOrders: _completedOrders,
+                    isLoading: _isLoading,
+                    onRefresh: _loadOrders,
+                  );
+                },
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.keyboard_arrow_down,
+                      color: Color(0xFFA6A6A6),
+                      size: 20,
                     ),
-                  ),
-                ],
+                    SizedBox(width: 4),
+                    Text(
+                      'Completed',
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontFamily: 'hind',
+                        color: Color(0xFF0386D0),
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
               ),
-            ),
-          ],
+            ],
           ),
           Padding(
             padding: const EdgeInsets.only(right: 8.0),
@@ -146,6 +147,13 @@ class _DriverHomeState extends State<DriverHome> {
             ),
           ),
         ],
+        //Set explicit colors and elevation
+        backgroundColor: Colors.white,
+        foregroundColor: Colors.black,
+        elevation: 0,
+        scrolledUnderElevation: 0, // This prevents the color change on scroll
+        shadowColor: Colors.transparent,
+        surfaceTintColor: Colors.transparent,
       ),
       body: IndexedStack(
         index: _currentPageIndex,
@@ -172,6 +180,7 @@ class _DriverHomeState extends State<DriverHome> {
         type: BottomNavigationBarType.fixed,
         selectedItemColor: Color(0xFF0386D0),
         unselectedItemColor: Colors.grey,
+        backgroundColor: Colors.white, // consistent bottom navigation color
         items: [
           BottomNavigationBarItem(
             icon: Icon(Icons.dashboard),

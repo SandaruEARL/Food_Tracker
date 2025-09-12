@@ -1,32 +1,53 @@
+// lib/widgets/order_details_bottom_sheet.dart
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import '../../../models/order.dart';
+import '../../../widgets/custom_button.dart';
 
-import '../../models/order.dart';
 
-class CompletedOrderDetailsSheet extends StatefulWidget {
+class OrderDetailsBottomSheet extends StatefulWidget {
   final Order order;
+  final bool isActiveOrder;
+  final Function(int orderId, String status) onUpdateOrderStatus;
+  final bool hasActiveOrders;
 
-  const CompletedOrderDetailsSheet({
-    Key? key,
+  const OrderDetailsBottomSheet({
+    super.key,
     required this.order,
-  }) : super(key: key);
+    required this.isActiveOrder,
+    required this.onUpdateOrderStatus,
+    this.hasActiveOrders = false,
 
-  static void show(BuildContext context, {required Order order}) {
+  });
+
+  static void show(
+      BuildContext context, {
+        required Order order,
+        required bool isActiveOrder,
+        required Function(int orderId, String status) onUpdateOrderStatus,
+        bool hasActiveOrders = false,
+      }) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
+
       builder: (BuildContext context) {
-        return CompletedOrderDetailsSheet(order: order);
+        return OrderDetailsBottomSheet(
+          order: order,
+          isActiveOrder: isActiveOrder,
+          onUpdateOrderStatus: onUpdateOrderStatus,
+          hasActiveOrders: hasActiveOrders,
+        );
       },
     );
   }
 
   @override
-  State<CompletedOrderDetailsSheet> createState() => _CompletedOrderDetailsSheetState();
+  State<OrderDetailsBottomSheet> createState() => _OrderDetailsBottomSheetState();
 }
 
-class _CompletedOrderDetailsSheetState extends State<CompletedOrderDetailsSheet> {
+class _OrderDetailsBottomSheetState extends State<OrderDetailsBottomSheet> {
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -38,15 +59,15 @@ class _CompletedOrderDetailsSheetState extends State<CompletedOrderDetailsSheet>
         ),
       ),
       child: DraggableScrollableSheet(
-        initialChildSize: 0.8,
-        minChildSize: 0.6,
-        maxChildSize: 0.8,
+        initialChildSize: 0.7,
+        minChildSize: 0.5,
+        maxChildSize: 0.7,
         expand: false,
         builder: (context, scrollController) {
           return SingleChildScrollView(
             controller: scrollController,
             child: Padding(
-              padding: EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+              padding: EdgeInsets.symmetric(horizontal: 16,vertical: 22),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -63,22 +84,23 @@ class _CompletedOrderDetailsSheetState extends State<CompletedOrderDetailsSheet>
                   ),
                   SizedBox(height: 20),
 
-                  // Order ID Title with close button
+                  // Order ID Title
+
                   Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Text(
-                        '#ORD-0000${widget.order.id}',
-                        style: TextStyle(
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                          fontFamily: 'hind',
-                        ),
+                            '#ORD-0000${widget.order.id}',
+                            style: TextStyle(
+                              fontSize: 24,
+                              fontWeight: FontWeight.bold,
+                              fontFamily: 'hind',
+                            ),
                       ),
                       Expanded(
                         child: IconButton(
                           icon: Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 140),
+                            padding: const EdgeInsets.symmetric(horizontal:140),
                             child: Icon(FontAwesomeIcons.timesCircle, color: Colors.grey[600]),
                           ),
                           onPressed: () => Navigator.of(context).pop(),
@@ -87,11 +109,14 @@ class _CompletedOrderDetailsSheetState extends State<CompletedOrderDetailsSheet>
                     ],
                   ),
 
+
+
                   SizedBox(height: 20),
 
                   // Description
                   Container(
-                    decoration: BoxDecoration(color: Color(0xFFF6F5F5),borderRadius: BorderRadius.circular(10)),
+                    padding: EdgeInsets.all(15),
+                    decoration: BoxDecoration(color: Color(0xFFF6F5F5),borderRadius: BorderRadius.circular(10),),
                     child: Column(
                       children: [
                         _buildDetailRow(
@@ -100,37 +125,24 @@ class _CompletedOrderDetailsSheetState extends State<CompletedOrderDetailsSheet>
                               widget.order.items?.map((item) => item.name).join(', ') ??
                               'Order details not available',
                         ),
-                    
+
                         // Customer
                         _buildDetailRow('Customer', 'N/A'),
-                    
+
                         // Customer Phone
                         _buildDetailRow('Phone', 'N/A'),
-                    
+
                         // Restaurant
                         _buildDetailRow('Restaurant', 'N/A'),
-                    
-                        // Restaurant Address
-                        _buildDetailRow('Address', 'N/A'),
-                    
-                        // Customer Address
-                        _buildDetailRow('Delivery Address', 'N/A'),
-                    
-                        // Total Amount
-                        _buildDetailRow('Total Amount', 'N/A'),
-                    
-                        // Completed Date
-                        _buildDetailRow(
-                            'Completed On',
-                            widget.order.createdAt != null ? _formatDate(widget.order.createdAt!) : 'N/A'
-                        ),
-                    
                         // Status
                         _buildDetailRow(
                           'Status',
                           widget.order.status,
                           isStatus: true,
                         ),
+
+                        // Actions with Button
+                        _buildActionRow(context,widget.order, widget.isActiveOrder,widget.hasActiveOrders),
                       ],
                     ),
                   ),
@@ -147,38 +159,40 @@ class _CompletedOrderDetailsSheetState extends State<CompletedOrderDetailsSheet>
   }
 
   Widget _buildDetailRow(String label, String value, {bool isStatus = false}) {
-      return Padding(
-        padding: EdgeInsets.symmetric(horizontal: 16, vertical: 5),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            SizedBox(
-              width: 100,
-              child: Text(
-                '$label:',
-                style: TextStyle(
-                  fontWeight: FontWeight.w600,
-                  color: Colors.grey[600],
-                  fontSize: 14,
-                ),
-              ),
-            ),
-          SizedBox(width: 30),
-          Expanded( // Expanded is directly inside Row
-            child: isStatus
-                ? Text(
-              value.toUpperCase(),
+    return Padding(
+      padding: EdgeInsets.only(bottom: 16,),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 100,
+            child: Text(
+              '$label:',
               style: TextStyle(
                 fontWeight: FontWeight.w600,
-                color: _getStatusColor(value),
-                fontSize: 12,
-              ),
-            )
-                : Text(
-              value,
-              style: TextStyle(
-                fontWeight: FontWeight.w500,
+                color: Colors.grey[600],
                 fontSize: 14,
+              ),
+            ),
+          ),
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 30),
+              child: isStatus
+                  ? Text(
+                value.toUpperCase(),
+                style: TextStyle(
+                  fontWeight: FontWeight.w600,
+                  color: _getStatusColor(value),
+                  fontSize: 12,
+                ),
+              )
+                  : Text(
+                value,
+                style: TextStyle(
+                  fontWeight: FontWeight.w500,
+                  fontSize: 14,
+                ),
               ),
             ),
           ),
@@ -187,12 +201,37 @@ class _CompletedOrderDetailsSheetState extends State<CompletedOrderDetailsSheet>
     );
   }
 
+  Widget _buildActionRow(BuildContext context, Order order, bool isActiveOrder, bool has) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.end,
+      children: [
+        SizedBox(
+          child: Text(
+            'Actions:',
+            style: TextStyle(
+              fontWeight: FontWeight.w600,
+              color: Colors.grey[600],
+              fontSize: 14,
+            ),
+          ),
+        ),
+        SizedBox(width: 50,),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal:26.0),
+          child: OrderActionButton(
+            isActiveOrder: isActiveOrder,
+            orderId: order.id,
+            onUpdateOrderStatus: widget.onUpdateOrderStatus,
+            hasActiveOrders: widget.hasActiveOrders,
+            onActionComplete: () => Navigator.of(context).pop(),
+          ),
+        ),
+      ],
+    );
+  }
+
   Color _getStatusColor(String status) {
     switch (status.toLowerCase()) {
-      case 'completed':
-        return Colors.green;
-      case 'cancelled':
-        return Colors.red;
       case 'pending':
         return Colors.orange;
       case 'confirmed':
@@ -205,14 +244,8 @@ class _CompletedOrderDetailsSheetState extends State<CompletedOrderDetailsSheet>
         return Color(0xFFD2A146);
       case 'delivered':
         return Colors.green;
-      case 'in_progress':
-        return Colors.blue;
       default:
         return Colors.grey;
     }
-  }
-
-  String _formatDate(DateTime date) {
-    return '${date.day}/${date.month}/${date.year} at ${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}';
   }
 }
