@@ -1,11 +1,16 @@
 // lib/screens/restaurant/restaurant_home.dart
 import 'package:flutter/material.dart';
+import 'package:foodtracker/screens/restaurant/retaurent_summery_bottom_sheet.dart';
 import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../services/api_service.dart';
 import '../../models/order.dart';
 import '../../utils/constants.dart';
+import '../../widgets/brand_logo.dart';
+import '../../widgets/custom_tab_bar.dart';
+import 'package:intl/intl.dart';
 
+import 'add_menu_bottom_sheet.dart';
 
 class RestaurantHome extends StatefulWidget {
   const RestaurantHome({super.key});
@@ -14,18 +19,26 @@ class RestaurantHome extends StatefulWidget {
   _RestaurantHomeState createState() => _RestaurantHomeState();
 }
 
-class _RestaurantHomeState extends State<RestaurantHome> {
+class _RestaurantHomeState extends State<RestaurantHome> with TickerProviderStateMixin {
   final ApiService _apiService = ApiService();
   List<Order> _newOrders = [];
   List<Order> _myOrders = [];
   bool _isLoading = false;
-  int _currentIndex = 0;
+
+  late TabController _tabController;
 
   @override
   void initState() {
     super.initState();
+    _tabController = TabController(length: 2, vsync: this);
     _loadOrders();
     _setupWebSocketListeners();
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
   }
 
   void _setupWebSocketListeners() {
@@ -53,116 +66,277 @@ class _RestaurantHomeState extends State<RestaurantHome> {
     }
   }
 
+  void _showSummaryBottomSheet() {
+    RestaurantSummaryBottomSheet.show(context, _newOrders, _myOrders, );
+  }
+
   @override
   Widget build(BuildContext context) {
     final authProvider = Provider.of<AuthProvider>(context);
 
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: AppBar(
-        title: Text('Restaurant Dashboard'),
+        backgroundColor: Colors.white,
+        elevation: 0,
+        surfaceTintColor: Colors.transparent,
+        title: Row(
+          children: [
+            BrandLogo(size: 20,),
+          ],
+        ),
+        centerTitle: false,
         actions: [
-          IconButton(
-            icon: Icon(Icons.logout),
-            onPressed: () async {
-              await authProvider.logout();
-              Navigator.pushReplacementNamed(context, '/');
-            },
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              SizedBox(width: 4),
+              GestureDetector(
+                onTap: _showSummaryBottomSheet,
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.keyboard_arrow_down,
+                      color: Color(0xFFA6A6A6),
+                      size: 20,
+                    ),
+                    SizedBox(width: 4),
+                    Text(
+                      'Summary',
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontFamily: 'hind',
+                        color: Color(0xFF0386D0),
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          Padding(
+            padding: const EdgeInsets.only(right: 8.0),
+            child: IconButton(
+              icon: Icon(Icons.logout, color: Color(0xFFA6A6A6)),
+              onPressed: () async {
+                await authProvider.logout();
+                Navigator.pushReplacementNamed(context, '/');
+              },
+            ),
           ),
         ],
       ),
-      body: IndexedStack(
-        index: _currentIndex,
+      body: Column(
         children: [
-          _buildNewOrdersTab(),
-          _buildMyOrdersTab(),
+          _buildTabSection(),
+          Expanded(
+            child: TabBarView(
+              controller: _tabController,
+              children: [
+                _buildAvailableOrdersTab(),
+                _buildMyOrdersTab(),
+              ],
+            ),
+          ),
         ],
       ),
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _currentIndex,
-        onTap: (index) => setState(() => _currentIndex = index),
-        items: [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.new_releases),
-            label: 'New Orders',
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          AddMenuItemBottomSheet.show(context);
+        },
+        backgroundColor: const Color(0xFF0386D0),
+        child: const Icon(Icons.add, color: Colors.white),
+      ),
+    );
+  }
+
+  Widget _buildTabSection() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 15),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: EdgeInsets.symmetric( vertical: 5),
+                child: Column(
+                  children: [
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Text(
+                              'Manage Restaurant',
+                              style: TextStyle(
+                                fontSize: 25,
+                                fontFamily: 'hind',
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
+                        Text(
+                          _getCurrentDateTitle(),
+                          style: TextStyle(
+                              fontSize: 16,
+                              fontFamily: 'hind',
+                              fontWeight: FontWeight.bold
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.restaurant_menu),
-            label: 'My Orders',
+          CustomTabBar(
+            controller: _tabController,
+            tabTitles: [
+              'Available Orders(${_newOrders.length})',
+              'My Orders(${_myOrders.length})'
+            ],
+            margin: EdgeInsets.zero,
+            labelStyle: const TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: 14,
+            ),
+            unselectedLabelStyle: const TextStyle(
+              fontWeight: FontWeight.normal,
+              fontSize: 14,
+            ),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildNewOrdersTab() {
-    return _isLoading
-        ? Center(child: CircularProgressIndicator())
-        : RefreshIndicator(
-      onRefresh: _loadOrders,
-      child: ListView.builder(
-        itemCount: _newOrders.length,
-        itemBuilder: (context, index) {
-          final order = _newOrders[index];
-          return Card(
-            margin: EdgeInsets.all(8),
-            child: Padding(
-              padding: EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('Order #${order.id}', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                  SizedBox(height: 8),
-                  if (order.items != null) ...[
-                    Text('Items:'),
-                    ...order.items!.map((item) => Text('- ${item.name} x${item.quantity}')),
-                  ],
-                  SizedBox(height: 8),
-                  Text('Total: \$${order.total.toStringAsFixed(2)}', style: TextStyle(fontWeight: FontWeight.bold)),
-                  SizedBox(height: 12),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: [
-                      ElevatedButton(
-                        onPressed: () => _updateOrderStatus(order.id, OrderStatus.accepted),
-                        style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
-                        child: Text('Accept'),
-                      ),
-                      OutlinedButton(
-                        onPressed: () {
-                          // Handle reject - might want to implement a reject API
-                        },
-                        child: Text('Reject'),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
+  String _getCurrentDateTitle() {
+    final now = DateTime.now();
+
+    final dayFormatter = DateFormat('EEEE'); // Full day name
+    final monthDayFormatter = DateFormat('MMMM d'); // Month and day number
+    final yearFormatter = DateFormat('y'); // Year
+    final timeFormatter = DateFormat('hh:mm a'); // Time with AM/PM
+
+    return '${dayFormatter.format(now)}, ${monthDayFormatter.format(now)}, ${yearFormatter.format(now)}, ${timeFormatter.format(now)}';
+  }
+
+  Widget _buildAvailableOrdersTab() {
+    if (_isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    return Column(
+      children: [
+        Expanded(
+          child: RefreshIndicator(
+            onRefresh: _loadOrders,
+            child: ListView.builder(
+              padding: const EdgeInsets.all(16),
+              itemCount: _newOrders.length,
+              itemBuilder: (context, index) {
+                final order = _newOrders[index];
+                return _buildOrderCard(order, isAvailable: true);
+              },
             ),
-          );
-        },
-      ),
+          ),
+        ),
+      ],
     );
   }
 
   Widget _buildMyOrdersTab() {
-    return _isLoading
-        ? Center(child: CircularProgressIndicator())
-        : RefreshIndicator(
-      onRefresh: _loadOrders,
-      child: ListView.builder(
-        itemCount: _myOrders.length,
-        itemBuilder: (context, index) {
-          final order = _myOrders[index];
-          return Card(
-            margin: EdgeInsets.all(8),
-            child: ListTile(
-              title: Text('Order #${order.id}'),
-              subtitle: Text('Status: ${order.status}\nTotal: \$${order.total.toStringAsFixed(2)}'),
-              trailing: _getActionButton(order),
-              isThreeLine: true,
+    if (_isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    return Column(
+      children: [
+        Expanded(
+          child: RefreshIndicator(
+            onRefresh: _loadOrders,
+            child: ListView.builder(
+              padding: const EdgeInsets.all(16),
+              itemCount: _myOrders.length,
+              itemBuilder: (context, index) {
+                final order = _myOrders[index];
+                return _buildOrderCard(order, isAvailable: false);
+              },
             ),
-          );
-        },
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildOrderCard(Order order, {required bool isAvailable}) {
+    return Container(
+      margin: EdgeInsets.only(bottom: 12),
+      decoration: BoxDecoration(
+        color: Color(0xFFF6F5F5),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(10),
+          onTap: () {
+            // Handle order tap if needed
+          },
+          child: ListTile(
+            contentPadding: EdgeInsets.all(16),
+            title: Text(
+              '#ORD-${order.id.toString().padLeft(5, '0')}',
+              style: TextStyle(fontWeight: FontWeight.w600),
+            ),
+            subtitle: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                SizedBox(height: 4),
+                Text(
+                  order.items?.first.name ?? 'Order Item',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w500,
+                    fontSize: 14,
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
+            trailing: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (isAvailable)
+                  ElevatedButton(
+                    onPressed: () => _updateOrderStatus(order.id, OrderStatus.accepted),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF0386D0),
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      elevation: 0,
+                    ),
+                    child: const Text(
+                      'Mark Prepare',
+                      style: TextStyle(fontSize: 12),
+                    ),
+                  )
+                else
+                  _getActionButton(order) ?? const SizedBox.shrink(),
+                SizedBox(width: 5,),
+                Icon(Icons.keyboard_arrow_right, color: Color(0XFFA49E9E),)
+              ],
+            ),
+            isThreeLine: false,
+          ),
+        ),
       ),
     );
   }
@@ -172,7 +346,19 @@ class _RestaurantHomeState extends State<RestaurantHome> {
       case OrderStatus.accepted:
         return ElevatedButton(
           onPressed: () => _updateOrderStatus(order.id, OrderStatus.readyForPickup),
-          child: Text('Ready'),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: const Color(0xFF0386D0),
+            foregroundColor: Colors.white,
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(6),
+            ),
+            elevation: 0,
+          ),
+          child: const Text(
+            'Ready',
+            style: TextStyle(fontSize: 12),
+          ),
         );
       default:
         return null;

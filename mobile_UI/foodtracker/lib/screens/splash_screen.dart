@@ -15,7 +15,7 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   void initState() {
     super.initState();
-    _initialize();
+    Future.microtask(() => _initialize());
   }
 
   _initialize() async {
@@ -43,12 +43,12 @@ class _SplashScreenState extends State<SplashScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.restaurant, size: 80, color: Colors.orange),
-            SizedBox(height: 20),
+            SizedBox(height: 16),
             Text(
-              'Food Delivery',
+              'This app is a demo, a property of quickman.lk',
               style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
             ),
+
             SizedBox(height: 20),
             CircularProgressIndicator(),
           ],

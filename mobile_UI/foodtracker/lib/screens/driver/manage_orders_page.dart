@@ -6,7 +6,6 @@ import '../../utils/constants.dart';
 import '../../widgets/custom_tab_bar.dart';
 import '../../widgets/custom_button.dart';
 import 'bottom_sheets/order_details_bottom_sheet.dart';
-import 'bottom_sheets/completed_orders_bottom_sheet.dart';
 import 'bottom_sheets/completed_order_details_sheet.dart';
 
 class ManageOrdersPage extends StatefulWidget {
