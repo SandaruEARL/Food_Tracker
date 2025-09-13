@@ -1,5 +1,6 @@
 // lib/screens/driver/manage_orders_page.dart
 import 'package:flutter/material.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import '../../models/order.dart';
 import 'package:intl/intl.dart';
 import '../../utils/constants.dart';
@@ -93,6 +94,27 @@ class ManageOrdersPageState extends State<ManageOrdersPage>
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
+                            Padding(
+                              padding: const EdgeInsets.only(left: 30),
+                              child: Row(
+                                children: [
+                                  GestureDetector(
+                                    onTap: () {},
+                                    child: Icon(FontAwesomeIcons.search, size: 20,color:  Color(0xFFA6A6A6),),
+                                  ),
+                                  SizedBox(width: 10,),
+                                  GestureDetector(
+                                    onTap: () {},
+                                    child: Icon(FontAwesomeIcons.locationCrosshairs, size: 20, color:  Color(0xFFA6A6A6),),
+                                  ),
+                                  SizedBox(width: 10,),
+                                  GestureDetector(
+                                    onTap: () {},
+                                    child: Icon(FontAwesomeIcons.sync, size: 20, color:  Color(0xFFA6A6A6),),
+                                  ),
+                                ],
+                              ),
+                            )
                           ],
                         ),
                         Text(

@@ -14,6 +14,9 @@ class LocationService {
 
     serviceEnabled = await Geolocator.isLocationServiceEnabled();
     if (!serviceEnabled) {
+      if (kDebugMode) {
+        print('Location services are disabled.');
+      }
       return false;
     }
 
@@ -21,11 +24,17 @@ class LocationService {
     if (permission == LocationPermission.denied) {
       permission = await Geolocator.requestPermission();
       if (permission == LocationPermission.denied) {
+        if (kDebugMode) {
+          print('Location permissions are denied');
+        }
         return false;
       }
     }
 
     if (permission == LocationPermission.deniedForever) {
+      if (kDebugMode) {
+        print('Location permissions are permanently denied');
+      }
       return false;
     }
 
@@ -35,22 +44,34 @@ class LocationService {
   // Get current location once
   Future<Location?> getCurrentLocation() async {
     try {
+      // Check permissions first
+      final hasPermission = await _handleLocationPermission();
+      if (!hasPermission) {
+        if (kDebugMode) {
+          print('Location permission denied or service disabled');
+        }
+        return null;
+      }
+
       final position = await Geolocator.getCurrentPosition(
         locationSettings: LocationSettings(
           accuracy: LocationAccuracy.high,
           distanceFilter: 0,
         ),
       );
+
+      if (kDebugMode) {
+        print('Location obtained: ${position.latitude}, ${position.longitude}');
+      }
+
       return Location(lat: position.latitude, lng: position.longitude);
     } catch (e) {
       if (kDebugMode) {
         print('Error getting current location: $e');
       }
-
+      return null;
     }
-    return null;
   }
-
 
   // Start tracking location continuously (for drivers)
   Future<void> startLocationTracking() async {

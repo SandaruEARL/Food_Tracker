@@ -57,7 +57,7 @@ class CustomerHomeState extends State<CustomerHome> with TickerProviderStateMixi
     _loadOrders();
     _setupWebSocketListeners();
     _initializeCustomerInfo();
-    // Removed _getCurrentLocation() - only fetch when user taps the sync icon
+
   }
 
   void _initializeCustomerInfo() {
