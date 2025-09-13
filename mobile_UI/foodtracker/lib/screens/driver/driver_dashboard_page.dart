@@ -26,10 +26,10 @@ class DriverDashboardPage extends StatefulWidget {
   });
 
   @override
-  _DriverDashboardPageState createState() => _DriverDashboardPageState();
+  DriverDashboardPageState createState() => DriverDashboardPageState();
 }
 
-class _DriverDashboardPageState extends State<DriverDashboardPage>
+class DriverDashboardPageState extends State<DriverDashboardPage>
     with TickerProviderStateMixin {
   late TabController _tabController;
 
@@ -114,10 +114,10 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
   String _getCurrentDateTitle() {
     final now = DateTime.now();
 
-    final dayFormatter = DateFormat('EEEE'); // Full day name
-    final monthDayFormatter = DateFormat('MMMM d'); // Month and day number
-    final yearFormatter = DateFormat('y'); // Year
-    final timeFormatter = DateFormat('hh:mm a'); // Time with AM/PM
+    final dayFormatter = DateFormat('EEEE');
+    final monthDayFormatter = DateFormat('MMMM d');
+    final yearFormatter = DateFormat('y');
+    final timeFormatter = DateFormat('hh:mm a');
 
     return '${dayFormatter.format(now)}, ${monthDayFormatter.format(now)}, ${yearFormatter.format(now)}, ${timeFormatter.format(now)}';
   }
@@ -212,24 +212,7 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
 
   Widget _buildActiveOrdersTab() {
 
-    return widget.activeOrders.isEmpty
-        ? Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(Icons.local_shipping, size: 64, color: Colors.grey),
-          SizedBox(height: 16),
-          Text(
-            'No active orders',
-            style: TextStyle(
-              fontSize: 18,
-              color: Colors.grey[600],
-            ),
-          ),
-        ],
-      ),
-    )
-        : ListView.builder(
+    return ListView.builder(
       padding: EdgeInsets.all(16),
       itemCount: widget.activeOrders.length,
       itemBuilder: (context, index) {
@@ -244,20 +227,12 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.map, size: 64, color: Colors.grey),
           SizedBox(height: 16),
           Text(
-            'Delivery Map',
+            'Delivery Map To be Implemented',
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
-              color: Colors.grey[600],
-            ),
-          ),
-          SizedBox(height: 8),
-          Text(
-            'Map integration coming soon',
-            style: TextStyle(
               color: Colors.grey[600],
             ),
           ),

@@ -1,7 +1,7 @@
-// lib/widgets/custom_elevated_button.dart
+// lib/widgets/reg_sign_button.dart
 import 'package:flutter/material.dart';
 
-class CustomElevatedButton extends StatelessWidget {
+class AuthButton extends StatelessWidget {
   final VoidCallback? onPressed;
   final String text;
   final bool isLoading;
@@ -13,8 +13,8 @@ class CustomElevatedButton extends StatelessWidget {
   final double? elevation;
   final TextStyle? textStyle;
 
-  const CustomElevatedButton({
-    Key? key,
+  const AuthButton({
+    super.key,
     required this.onPressed,
     required this.text,
     this.isLoading = false,
@@ -25,7 +25,7 @@ class CustomElevatedButton extends StatelessWidget {
     this.borderRadius = 10,
     this.elevation = 2,
     this.textStyle,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

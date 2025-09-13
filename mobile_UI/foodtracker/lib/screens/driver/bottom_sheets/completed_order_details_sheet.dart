@@ -7,9 +7,9 @@ class CompletedOrderDetailsSheet extends StatefulWidget {
   final Order order;
 
   const CompletedOrderDetailsSheet({
-    Key? key,
+    super.key,
     required this.order,
-  }) : super(key: key);
+  });
 
   static void show(BuildContext context, {required Order order}) {
     showModalBottomSheet(

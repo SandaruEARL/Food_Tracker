@@ -11,11 +11,13 @@ import 'orders_bottom_sheet.dart';
 
 
 class CustomerHome extends StatefulWidget {
+  const CustomerHome({super.key});
+
   @override
-  _CustomerHomeState createState() => _CustomerHomeState();
+  CustomerHomeState createState() => CustomerHomeState();
 }
 
-class _CustomerHomeState extends State<CustomerHome> with TickerProviderStateMixin {
+class CustomerHomeState extends State<CustomerHome> with TickerProviderStateMixin {
   final ApiService _apiService = ApiService();
   final LocationService _locationService = LocationService();
   final _descriptionController = TextEditingController();
@@ -27,7 +29,6 @@ class _CustomerHomeState extends State<CustomerHome> with TickerProviderStateMix
   final _longitudeController = TextEditingController();
 
   List<Order> _orders = [];
-  bool _isLoading = false;
   bool _isFetchingLocation = false;
   Location? _currentLocation;
 
@@ -82,11 +83,11 @@ class _CustomerHomeState extends State<CustomerHome> with TickerProviderStateMix
   }
 
   Future<void> _loadOrders() async {
-    setState(() => _isLoading = true);
+
     final orders = await _apiService.getRelevantOrders();
     setState(() {
       _orders = orders;
-      _isLoading = false;
+
     });
   }
 
@@ -163,6 +164,8 @@ class _CustomerHomeState extends State<CustomerHome> with TickerProviderStateMix
       location.lng,
       finalAddress,
     );
+
+    if (!mounted) return;
 
     if (success) {
       _descriptionController.text = "Order Description"; // Reset to placeholder
@@ -244,6 +247,7 @@ class _CustomerHomeState extends State<CustomerHome> with TickerProviderStateMix
                 icon: Icon(Icons.logout, color: Color(0xFFA6A6A6)),
                 onPressed: () async {
                   await authProvider.logout();
+                  if (!context.mounted) return;
                   Navigator.pushReplacementNamed(context, '/');
                 },
               ),

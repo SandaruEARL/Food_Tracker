@@ -18,7 +18,6 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => AuthProvider()),
       ],
       child: MaterialApp(
-        title: 'Food Delivery App',
 
         // Light Theme
         theme: ThemeData(

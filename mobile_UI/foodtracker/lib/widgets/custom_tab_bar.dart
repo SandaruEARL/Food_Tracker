@@ -12,7 +12,7 @@ class CustomTabBar extends StatelessWidget {
   final TextStyle? unselectedLabelStyle;
 
   const CustomTabBar({
-    Key? key,
+    super.key,
     required this.controller,
     required this.tabTitles,
     this.margin,
@@ -21,7 +21,7 @@ class CustomTabBar extends StatelessWidget {
     this.unselectedLabelColor = const Color(0xFFA6A6A6),
     this.labelStyle,
     this.unselectedLabelStyle,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

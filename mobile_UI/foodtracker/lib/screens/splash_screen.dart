@@ -7,11 +7,13 @@ import 'login_register/login_register_screen.dart';
 
 
 class SplashScreen extends StatefulWidget {
+  const SplashScreen({super.key});
+
   @override
-  _SplashScreenState createState() => _SplashScreenState();
+  SplashScreenState createState() => SplashScreenState();
 }
 
-class _SplashScreenState extends State<SplashScreen> {
+class SplashScreenState extends State<SplashScreen> {
   @override
   void initState() {
     super.initState();
@@ -22,7 +24,9 @@ class _SplashScreenState extends State<SplashScreen> {
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
     await authProvider.init();
 
-    // Navigate based on authentication status
+    if (!mounted) return;
+
+
     if (authProvider.isAuthenticated) {
       Navigator.pushReplacement(
         context,
@@ -45,7 +49,7 @@ class _SplashScreenState extends State<SplashScreen> {
           children: [
             SizedBox(height: 16),
             Text(
-              'This app is a demo, a property of quickman.lk',
+              'A property of quickman.lk',
               style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
             ),
 

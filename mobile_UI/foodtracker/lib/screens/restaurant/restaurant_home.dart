@@ -15,11 +15,10 @@ import 'add_menu_bottom_sheet.dart';
 class RestaurantHome extends StatefulWidget {
   const RestaurantHome({super.key});
 
-  @override
-  _RestaurantHomeState createState() => _RestaurantHomeState();
+  @override RestaurantHomeState createState() => RestaurantHomeState();
 }
 
-class _RestaurantHomeState extends State<RestaurantHome> with TickerProviderStateMixin {
+class RestaurantHomeState extends State<RestaurantHome> with TickerProviderStateMixin {
   final ApiService _apiService = ApiService();
   List<Order> _newOrders = [];
   List<Order> _myOrders = [];
@@ -120,8 +119,9 @@ class _RestaurantHomeState extends State<RestaurantHome> with TickerProviderStat
             child: IconButton(
               icon: Icon(Icons.logout, color: Color(0xFFA6A6A6)),
               onPressed: () async {
+                final navigator = Navigator.of(context);
                 await authProvider.logout();
-                Navigator.pushReplacementNamed(context, '/');
+                navigator.pushReplacementNamed('/');
               },
             ),
           ),

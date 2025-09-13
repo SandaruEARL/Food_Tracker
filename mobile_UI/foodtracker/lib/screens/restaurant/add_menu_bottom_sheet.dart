@@ -1,4 +1,5 @@
 // lib/screens/restaurant/add_menu_item_bottom_sheet.dart
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 class AddMenuItemBottomSheet extends StatefulWidget {
@@ -14,10 +15,10 @@ class AddMenuItemBottomSheet extends StatefulWidget {
   }
 
   @override
-  _AddMenuItemBottomSheetState createState() => _AddMenuItemBottomSheetState();
+  AddMenuItemBottomSheetState createState() => AddMenuItemBottomSheetState();
 }
 
-class _AddMenuItemBottomSheetState extends State<AddMenuItemBottomSheet> {
+class AddMenuItemBottomSheetState extends State<AddMenuItemBottomSheet> {
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _descriptionController = TextEditingController();
   final TextEditingController _priceController = TextEditingController();
@@ -34,10 +35,13 @@ class _AddMenuItemBottomSheetState extends State<AddMenuItemBottomSheet> {
 
   void _handleAddItem() {
     // Handle add menu item logic here
-    print('Item Name: ${_nameController.text}');
-    print('Description: ${_descriptionController.text}');
-    print('Price: ${_priceController.text}');
-    print('Category: ${_categoryController.text}');
+    if (kDebugMode) {
+      print('Item Name: ${_nameController.text}');
+      print('Description: ${_descriptionController.text}');
+      print('Price: ${_priceController.text}');
+      print('Category: ${_categoryController.text}');
+    }
+
 
     Navigator.of(context).pop();
   }
@@ -48,7 +52,9 @@ class _AddMenuItemBottomSheetState extends State<AddMenuItemBottomSheet> {
 
   void _handleImageUpload() {
     // Handle image upload logic here (dummy for now)
-    print('Image upload tapped');
+    if (kDebugMode) {
+      print('Image upload tapped');
+    }
   }
 
   @override

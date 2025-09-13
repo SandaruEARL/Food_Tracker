@@ -12,11 +12,11 @@ class CompletedOrdersBottomSheet extends StatelessWidget {
   final VoidCallback onRefresh;
 
   const CompletedOrdersBottomSheet({
-    Key? key,
+    super.key,
     required this.completedOrders,
     required this.isLoading,
     required this.onRefresh,
-  }) : super(key: key);
+  });
 
   static void show(
       BuildContext context, {

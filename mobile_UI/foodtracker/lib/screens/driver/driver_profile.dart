@@ -1,16 +1,16 @@
 // lib/screens/driver/driver_profile_page.dart
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import '../../providers/auth_provider.dart';
+
 
 class DriverProfilePage extends StatelessWidget {
+  const DriverProfilePage({super.key});
+
   @override
   Widget build(BuildContext context) {
-    final authProvider = Provider.of<AuthProvider>(context);
 
     return Stack(
       children: [
-        // Fixed Header
+
         Positioned(
           top: 0,
           left: 0,
@@ -36,7 +36,7 @@ class DriverProfilePage extends StatelessWidget {
 
         // Scrollable Content
         Positioned(
-          top: 70, // Adjust based on header height
+          top: 70,
           left: 0,
           right: 0,
           bottom: 0,
@@ -95,7 +95,6 @@ class DriverProfilePage extends StatelessWidget {
 
                   SizedBox(height: 30),
 
-                  // Vehicle Information Section
                   Text(
                     'Vehicle Information',
                     style: TextStyle(
@@ -106,6 +105,7 @@ class DriverProfilePage extends StatelessWidget {
 
                   SizedBox(height: 16),
 
+                  // Vehicle info
                   Container(
                     padding: EdgeInsets.all(20),
                     decoration: BoxDecoration(
@@ -199,8 +199,6 @@ class DriverProfilePage extends StatelessWidget {
                   ),
 
                   SizedBox(height: 40),
-
-
                 ],
               ),
             ),

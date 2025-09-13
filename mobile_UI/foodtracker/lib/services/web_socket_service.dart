@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:stomp_dart_client/stomp_dart_client.dart' show StompFrame, StompClient, StompConfig;
 
 import '../models/user.dart';
@@ -23,19 +24,27 @@ class WebSocketService {
       config: StompConfig(
         url: ApiConstants.wsUrl,
         onConnect: (StompFrame frame) {
-          print('WebSocket connected');
+          if (kDebugMode) {
+            print('WebSocket connected');
+          }
           _isConnected = true;
           _subscribeToTopics(user);
         },
         onDisconnect: (StompFrame frame) {
-          print('WebSocket disconnected');
+          if (kDebugMode) {
+            print('WebSocket disconnected');
+          }
           _isConnected = false;
         },
         onWebSocketError: (dynamic error) {
-          print('WebSocket error: $error');
+          if (kDebugMode) {
+            print('WebSocket error: $error');
+          }
         },
         onStompError: (StompFrame frame) {
-          print('STOMP error: ${frame.body}');
+          if (kDebugMode) {
+            print('STOMP error: ${frame.body}');
+          }
         },
       ),
     );

@@ -10,14 +10,14 @@ class CustomTextFormField extends StatelessWidget {
   final TextInputType keyboardType;
 
   const CustomTextFormField({
-    Key? key,
+    super.key,
     required this.controller,
     required this.labelText,
     required this.prefixIcon,
     this.obscureText = false,
     this.validator,
     this.keyboardType = TextInputType.text,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -25,7 +25,7 @@ class CustomTextFormField extends StatelessWidget {
       data: Theme.of(context).copyWith(
         textSelectionTheme: TextSelectionThemeData(
           cursorColor: Color(0xFF0386D0),
-          selectionColor: Color(0xFF0386D0).withOpacity(0.3),
+          selectionColor: Color(0xFF0386D0).withValues(),
           selectionHandleColor: Color(0xFF0386D0),
         ),
       ),
@@ -38,7 +38,7 @@ class CustomTextFormField extends StatelessWidget {
         enableSuggestions: false,
         autocorrect: false,
         autofillHints: null,
-        cursorColor: Color(0xFF0386D0), // Custom cursor color
+        cursorColor: Color(0xFF0386D0),
         decoration: InputDecoration(
           labelText: labelText,
           labelStyle: TextStyle(color: Color(0xFFA6A6A6)),

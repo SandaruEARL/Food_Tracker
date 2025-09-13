@@ -15,11 +15,13 @@ import 'driver_profile.dart';
 import 'manage_orders_page.dart';
 
 class DriverHome extends StatefulWidget {
+  const DriverHome({super.key});
+
   @override
-  _DriverHomeState createState() => _DriverHomeState();
+  DriverHomeState createState() => DriverHomeState();
 }
 
-class _DriverHomeState extends State<DriverHome> {
+class DriverHomeState extends State<DriverHome> {
   final ApiService _apiService = ApiService();
   final LocationService _locationService = LocationService();
   List<Order> _availableOrders = [];
@@ -53,15 +55,13 @@ class _DriverHomeState extends State<DriverHome> {
             (o) => o.status == OrderStatus.pickedUp,
         orElse: () => null as Order,
       );
-      if (activeOrder != null) {
-        final authProvider = Provider.of<AuthProvider>(context, listen: false);
-        authProvider.webSocketService.sendDriverLocation(
-            activeOrder.id,
-            location.lat,
-            location.lng
-        );
-      }
-    };
+      final authProvider = Provider.of<AuthProvider>(context, listen: false);
+      authProvider.webSocketService.sendDriverLocation(
+          activeOrder.id,
+          location.lat,
+          location.lng
+      );
+        };
   }
 
   Future<void> _loadOrders() async {
@@ -142,6 +142,7 @@ class _DriverHomeState extends State<DriverHome> {
               icon: Icon(Icons.logout, color: Color(0xFFA6A6A6)),
               onPressed: () async {
                 await authProvider.logout();
+                if (!context.mounted) return;
                 Navigator.pushReplacementNamed(context, '/');
               },
             ),
@@ -151,7 +152,7 @@ class _DriverHomeState extends State<DriverHome> {
         backgroundColor: Colors.white,
         foregroundColor: Colors.black,
         elevation: 0,
-        scrolledUnderElevation: 0, // This prevents the color change on scroll
+        scrolledUnderElevation: 0, // A trick for to prevent on-scroll color change on the app bar
         shadowColor: Colors.transparent,
         surfaceTintColor: Colors.transparent,
       ),
@@ -169,6 +170,8 @@ class _DriverHomeState extends State<DriverHome> {
             myOrders: _myOrders,
             isLoading: _isLoading,
             onRefresh: _loadOrders,
+            activeOrders: _activeOrders,
+            availableOrders: _availableOrders,
             onUpdateOrderStatus: _updateOrderStatus,
           ),
           DriverProfilePage(),

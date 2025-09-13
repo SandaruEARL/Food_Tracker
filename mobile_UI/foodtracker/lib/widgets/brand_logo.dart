@@ -21,7 +21,7 @@ class BrandLogo extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // If size is provided, use it; otherwise use fontSize; otherwise default to 18.0
+
     final effectiveFontSize = size ?? fontSize ?? 18.0;
 
     return Container(

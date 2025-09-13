@@ -6,7 +6,7 @@ import '../../../providers/auth_provider.dart';
 import '../../../utils/constants.dart';
 import '../home_wrapper_screen.dart';
 import '../../../widgets/custom_text_form_field.dart';
-import '../../../widgets/custom_elevated_button.dart';
+import '../../../widgets/reg_sign_button.dart';
 import '../../../widgets/custom_tab_bar.dart';
 import '../../../widgets/brand_logo.dart'; // Import the new brand logo widget
 
@@ -14,10 +14,10 @@ class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
 
   @override
-  _LoginScreenState createState() => _LoginScreenState();
+  LoginScreenState createState() => LoginScreenState();
 }
 
-class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStateMixin {
+class LoginScreenState extends State<LoginScreen> with SingleTickerProviderStateMixin {
   late TabController _tabController;
   int _currentTabIndex = 0;
 
@@ -311,7 +311,7 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
               // Error message for login only
               if (_loginError != null) _buildErrorMessage(_loginError!),
 
-              CustomElevatedButton(
+              AuthButton(
                 onPressed: _login,
                 text: 'Login',
                 isLoading: authProvider.isLoading,
@@ -466,7 +466,7 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
               if (_registerError != null) _buildErrorMessage(_registerError!),
 
               // Register button
-              CustomElevatedButton(
+              AuthButton(
                 onPressed: _register,
                 text: 'Register',
                 isLoading: authProvider.isLoading,

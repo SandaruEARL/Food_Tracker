@@ -1,4 +1,5 @@
 // lib/widgets/orders_bottom_sheet.dart
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:provider/provider.dart';
@@ -9,7 +10,7 @@ import '../../services/api_service.dart';
 
 
 class OrdersBottomSheet extends StatefulWidget {
-  const OrdersBottomSheet({Key? key}) : super(key: key);
+  const OrdersBottomSheet({super.key});
 
   static void show(BuildContext context) {
     showModalBottomSheet(
@@ -28,7 +29,7 @@ class _OrdersBottomSheetState extends State<OrdersBottomSheet> {
   final ApiService _apiService = ApiService();
   List<Order> _orders = [];
   bool _isLoading = true;
-  bool _isClearing = false;
+  bool isClearing = false;
   Map<String, DateTime> deliveryTimes = {}; // Store delivery times by order ID
 
   @override
@@ -74,10 +75,13 @@ class _OrdersBottomSheetState extends State<OrdersBottomSheet> {
 
           // Debug: Print order details
           for (final order in orders) {
-            print('Order ${order.id}:');
-            print('  - createdAt: ${order.createdAt}');
-            print('  - status: ${order.status}');
-            print('  - description: ${order.description}');
+            if (kDebugMode) {
+              print('Order ${order.id}:');
+              print('  - createdAt: ${order.createdAt}');
+              print('  - status: ${order.status}');
+              print('  - description: ${order.description}');
+            }
+
 
             if (_isDelivered(order.status) && !deliveryTimes.containsKey(order.id.toString())) {
               deliveryTimes[order.id.toString()] = DateTime.now();
@@ -151,13 +155,13 @@ class _OrdersBottomSheetState extends State<OrdersBottomSheet> {
               ),
             ),
             Expanded(
-              child: _isLoading || _isClearing
+              child: _isLoading || isClearing
                   ? Center(
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     CircularProgressIndicator(),
-                    if (_isClearing) ...[
+                    if (isClearing) ...[
                       SizedBox(height: 16),
                       Text(
                         'Clearing order history...',
@@ -222,9 +226,9 @@ class _OrdersBottomSheetState extends State<OrdersBottomSheet> {
               Container(
                 padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
-                  color: statusColor.withOpacity(0.1),
+                  color: statusColor.withValues(),
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: statusColor.withOpacity(0.3)),
+                  border: Border.all(color: statusColor.withValues()),
                 ),
                 child: Text(
                   statusText,

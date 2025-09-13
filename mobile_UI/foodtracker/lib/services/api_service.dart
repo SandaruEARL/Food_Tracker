@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/user.dart';
@@ -36,8 +37,11 @@ class ApiService {
   // AUTHENTICATION APIS
   Future<Map<String, dynamic>> register(String name, String email, String password, String type) async {
     try {
-      print('Attempting registration with URL: $baseUrl/api/auth/register');
-      print('Registration data: name=$name, email=$email, type=$type');
+      if (kDebugMode) {
+        print('Attempting registration with URL: $baseUrl/api/auth/register');
+        print('Registration data: name=$name, email=$email, type=$type');
+      }
+
 
       final response = await http.post(
         Uri.parse('$baseUrl/api/auth/register'),
@@ -50,8 +54,10 @@ class ApiService {
         }),
       );
 
-      print('Registration response status: ${response.statusCode}');
-      print('Registration response body: ${response.body}');
+      if (kDebugMode) {
+        print('Registration response body: ${response.body}');
+        print('Registration response status: ${response.statusCode}');
+      }
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         final data = jsonDecode(response.body);
@@ -81,7 +87,9 @@ class ApiService {
         };
       }
     } catch (e) {
-      print('Register error: $e');
+      if (kDebugMode) {
+        print('Register error: $e');
+      }
       return {
         'success': false,
         'user': null,
@@ -92,7 +100,9 @@ class ApiService {
 
   Future<Map<String, dynamic>> login(String email, String password) async {
     try {
-      print('Attempting login with URL: $baseUrl/api/auth/login');
+      if (kDebugMode) {
+        print('Attempting login with URL: $baseUrl/api/auth/login');
+      }
 
       final response = await http.post(
         Uri.parse('$baseUrl/api/auth/login'),
@@ -103,8 +113,11 @@ class ApiService {
         }),
       );
 
-      print('Login response status: ${response.statusCode}');
-      print('Login response body: ${response.body}');
+      if (kDebugMode) {
+        print('Login response status: ${response.statusCode}');
+        print('Login response body: ${response.body}');
+
+      }
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
@@ -133,7 +146,9 @@ class ApiService {
         };
       }
     } catch (e) {
-      print('Login error: $e');
+      if (kDebugMode) {
+        print('Login error: $e');
+      }
       return {
         'success': false,
         'user': null,
@@ -155,7 +170,9 @@ class ApiService {
         Uri.parse('$baseUrl/api/order/getrelavant'),
         headers: await _getHeaders(requireAuth: true),
       );
-      print('Get orders response: ${response.body}');
+      if (kDebugMode) {
+        print('Get orders response: ${response.body}');
+      }
 
       if (response.statusCode == 200) {
         final List<dynamic> data = jsonDecode(response.body);
@@ -163,7 +180,9 @@ class ApiService {
       }
       return [];
     } catch (e) {
-      print('Get orders error: $e');
+      if (kDebugMode) {
+        print('Get orders error: $e');
+      }
       return [];
     }
   }
@@ -181,7 +200,9 @@ class ApiService {
       }
       return [];
     } catch (e) {
-      print('Get restaurant orders error: $e');
+      if (kDebugMode) {
+        print('Get restaurant orders error: $e');
+      }
       return [];
     }
   }
@@ -199,7 +220,9 @@ class ApiService {
       }
       return [];
     } catch (e) {
-      print('Get driver orders error: $e');
+      if (kDebugMode) {
+        print('Get driver orders error: $e');
+      }
       return [];
     }
   }
@@ -221,7 +244,9 @@ class ApiService {
 
       return response.statusCode == 200 || response.statusCode == 201;
     } catch (e) {
-      print('Place order error: $e');
+      if (kDebugMode) {
+        print('Place order error: $e');
+      }
       return false;
     }
   }
@@ -236,7 +261,9 @@ class ApiService {
 
       return response.statusCode == 200;
     } catch (e) {
-      print('Update order status error: $e');
+      if (kDebugMode) {
+        print('Update order status error: $e');
+      }
       return false;
     }
   }

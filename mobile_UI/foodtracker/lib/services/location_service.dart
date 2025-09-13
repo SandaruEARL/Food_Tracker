@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:flutter/foundation.dart';
 import 'package:geolocator/geolocator.dart';
 import '../models/location.dart';
 
@@ -33,19 +34,23 @@ class LocationService {
 
   // Get current location once
   Future<Location?> getCurrentLocation() async {
-    final hasPermission = await _handleLocationPermission();
-    if (!hasPermission) return null;
-
     try {
       final position = await Geolocator.getCurrentPosition(
-        desiredAccuracy: LocationAccuracy.high,
+        locationSettings: LocationSettings(
+          accuracy: LocationAccuracy.high,
+          distanceFilter: 0,
+        ),
       );
       return Location(lat: position.latitude, lng: position.longitude);
     } catch (e) {
-      print('Error getting current location: $e');
-      return null;
+      if (kDebugMode) {
+        print('Error getting current location: $e');
+      }
+
     }
+    return null;
   }
+
 
   // Start tracking location continuously (for drivers)
   Future<void> startLocationTracking() async {

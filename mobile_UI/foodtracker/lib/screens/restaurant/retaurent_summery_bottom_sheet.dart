@@ -17,10 +17,6 @@ class RestaurantSummaryBottomSheet extends StatelessWidget {
     required this.completedTodayOrders,
   });
 
-  String _formatDate(DateTime date) {
-    return '${date.day}/${date.month}/${date.year} at ${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}';
-  }
-
   @override
   Widget build(BuildContext context) {
     return Container(

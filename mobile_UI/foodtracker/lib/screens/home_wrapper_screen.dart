@@ -20,7 +20,7 @@ class HomeWrapper extends StatelessWidget {
       return Scaffold(body: Center(child: Text('No user found')));
     }
 
-    // Route to appropriate home screen based on user type
+
     switch (user.type) {
       case UserType.customer:
         return CustomerHome();
